@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tags",
+  "info": {
+    "name": "tags",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "synonyms": {
+      "collection": "synonyms",
+      "via": "tag"
+    },
+    "subscriptions": {
+      "collection": "subscriptions",
+      "via": "tag"
+    },
+    "announcement": {
+      "via": "tags",
+      "model": "announcements"
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/synonyms",
+      "handler": "synonyms.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/synonyms/count",
+      "handler": "synonyms.count",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/synonyms/:id",
+      "handler": "synonyms.findOne",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/synonyms",
+      "handler": "synonyms.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/synonyms/:id",
+      "handler": "synonyms.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/synonyms/:id",
+      "handler": "synonyms.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

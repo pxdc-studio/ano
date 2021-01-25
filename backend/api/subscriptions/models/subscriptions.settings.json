@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "subscriptions",
+  "info": {
+    "name": "subscriptions",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "digest": {
+      "type": "string"
+    },
+    "author": {
+      "model": "authors",
+      "via": "subscriptions"
+    },
+    "tag": {
+      "via": "subscriptions",
+      "model": "tags"
+    }
+  }
+}

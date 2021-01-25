@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "announcements",
+  "info": {
+    "name": "announcements",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "maxLength": 80
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 4280
+    },
+    "author_id": {
+      "type": "biginteger"
+    },
+    "status": {
+      "type": "integer"
+    },
+    "postdate": {
+      "type": "date"
+    },
+    "resources": {
+      "collection": "resources",
+      "via": "announcement"
+    },
+    "tags": {
+      "collection": "tags",
+      "via": "announcement"
+    }
+  }
+}

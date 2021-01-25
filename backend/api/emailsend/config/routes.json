@@ -1,0 +1,52 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/emailsends",
+      "handler": "emailsend.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/emailsends/count",
+      "handler": "emailsend.count",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/emailsends/:id",
+      "handler": "emailsend.findOne",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/emailsends",
+      "handler": "emailsend.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/emailsends/:id",
+      "handler": "emailsend.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/emailsends/:id",
+      "handler": "emailsend.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}
