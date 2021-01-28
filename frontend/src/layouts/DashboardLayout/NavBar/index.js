@@ -1,25 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { Avatar, Box, Divider, Drawer, Hidden, List, Typography, makeStyles } from '@material-ui/core';
 import {
-  Avatar,
-  Box,
-  Divider,
-  Drawer,
-  Hidden,
-  List,
-  Typography,
-  makeStyles
-} from '@material-ui/core';
-import {
-  AlertCircle as AlertCircleIcon,
-  BarChart as BarChartIcon,
+  // AlertCircle as AlertCircleIcon,
+  // BarChart as BarChartIcon,
   Lock as LockIcon,
   Settings as SettingsIcon,
   ShoppingBag as ShoppingBagIcon,
   User as UserIcon,
-  UserPlus as UserPlusIcon,
-  Users as UsersIcon,
+  // UserPlus as UserPlusIcon,
+  Users as UsersIcon
 } from 'react-feather';
 import NavItem from './NavItem';
 
@@ -31,45 +22,45 @@ const user = {
 
 const items = [
   {
-    href: '/app/dashboard',
-    icon: BarChartIcon,
-    title: 'Dashboard'
-  },
-  {
-    href: '/app/announcements',
+    href: '/announcements',
     icon: UsersIcon,
     title: 'Announcements'
   },
   {
-    href: '/app/resources',
+    href: '/announcements/me',
+    icon: UserIcon,
+    title: 'My Announcements'
+  },
+  {
+    href: '/resources',
     icon: ShoppingBagIcon,
     title: 'Resources'
   },
   {
-    href: '/app/tags',
+    href: '/tags',
     icon: UserIcon,
     title: 'Tags'
   },
   {
-    href: '/app/synonyms',
+    href: '/synonyms',
     icon: SettingsIcon,
     title: 'Synonyms'
   },
   {
-    href: '/app/subscriptions',
+    href: '/subscriptions',
     icon: LockIcon,
     title: 'Subscriptions'
-  },
-  {
-    href: '/register',
-    icon: UserPlusIcon,
-    title: 'Register'
-  },
-  {
-    href: '/404',
-    icon: AlertCircleIcon,
-    title: 'Error'
   }
+  // {
+  //   href: '/register',
+  //   icon: UserPlusIcon,
+  //   title: 'Register'
+  // }
+  // {
+  //   href: '/404',
+  //   icon: AlertCircleIcon,
+  //   title: 'Error'
+  // }
 ];
 
 const useStyles = makeStyles(() => ({
@@ -102,34 +93,13 @@ const NavBar = ({ onMobileClose, openMobile }) => {
   }, [location.pathname]);
 
   const content = (
-    <Box
-      height="100%"
-      display="flex"
-      flexDirection="column"
-    >
-      <Box
-        alignItems="center"
-        display="flex"
-        flexDirection="column"
-        p={2}
-      >
-        <Avatar
-          className={classes.avatar}
-          component={RouterLink}
-          src={user.avatar}
-          to="/app/account"
-        />
-        <Typography
-          className={classes.name}
-          color="textPrimary"
-          variant="h5"
-        >
+    <Box height="100%" display="flex" flexDirection="column">
+      <Box alignItems="center" display="flex" flexDirection="column" p={2}>
+        <Avatar className={classes.avatar} component={RouterLink} src={user.avatar} to="/app/account" />
+        <Typography className={classes.name} color="textPrimary" variant="h5">
           {userName !== undefined ? userName : ''}
         </Typography>
-        <Typography
-          color="textSecondary"
-          variant="body2"
-        >
+        <Typography color="textSecondary" variant="body2">
           {user.jobTitle}
         </Typography>
       </Box>
@@ -137,12 +107,7 @@ const NavBar = ({ onMobileClose, openMobile }) => {
       <Box p={2}>
         <List>
           {items.map((item) => (
-            <NavItem
-              href={item.href}
-              key={item.title}
-              title={item.title}
-              icon={item.icon}
-            />
+            <NavItem href={item.href} key={item.title} title={item.title} icon={item.icon} />
           ))}
         </List>
       </Box>
@@ -164,12 +129,7 @@ const NavBar = ({ onMobileClose, openMobile }) => {
         </Drawer>
       </Hidden>
       <Hidden mdDown>
-        <Drawer
-          anchor="left"
-          classes={{ paper: classes.desktopDrawer }}
-          open
-          variant="persistent"
-        >
+        <Drawer anchor="left" classes={{ paper: classes.desktopDrawer }} open variant="persistent">
           {content}
         </Drawer>
       </Hidden>
@@ -183,7 +143,7 @@ NavBar.propTypes = {
 };
 
 NavBar.defaultProps = {
-  onMobileClose: () => { },
+  onMobileClose: () => {},
   openMobile: false
 };
 

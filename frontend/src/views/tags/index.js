@@ -68,10 +68,12 @@ const Tags = () => {
   const fetchAllTags = async () => {
     try {
       const { status, data } = await getAllTags();
+
       if (status === 200) {
         setTags(data);
         setLoader(false);
       }
+
     } catch (ex) {
       toast.error(ex.response.data.message);
       setTags([]);
@@ -104,10 +106,10 @@ const Tags = () => {
               title="Resources "
               isLoading={loader}
               columns={[
-                { title: 'ID', field: 'id', editable: 'never' },
-                { title: 'Name', field: 'name' },
+                // { title: 'ID', field: 'id', editable: 'never' },
+                { title: 'Name', field: 'name', render: (row) => row.slug.split("-").join(" ") },
                 { title: 'Slug', field: 'slug' },
-                { title: 'Announcement', field: 'announcement_id.title' },
+                // { title: 'Announcement', field: 'announcement_id.title' },
               ]}
               data={tags}
               editable={{

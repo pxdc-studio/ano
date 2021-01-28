@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Container,
-  makeStyles,
-} from '@material-ui/core';
+import { Box, Container, makeStyles } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
 import { useNavigate } from 'react-router-dom';
@@ -24,18 +20,17 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3),
     paddingRight: theme.spacing(20)
-
   }
 }));
 // MUI Theme Provider for using custom fonts
 const themeTable = createMuiTheme({
   palette: {
     primary: {
-      main: '#3f51b5',
+      main: '#3f51b5'
     },
     secondary: {
-      main: '#3f51b5',
-    },
+      main: '#3f51b5'
+    }
   },
   typography: {
     fontFamily: [
@@ -49,10 +44,9 @@ const themeTable = createMuiTheme({
       'sans-serif',
       '"Apple Color Emoji"',
       '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
-    ].join(','),
+      '"Segoe UI Symbol"'
+    ].join(',')
   }
-
 });
 
 const Resources = () => {
@@ -92,10 +86,7 @@ const Resources = () => {
   };
 
   return (
-    <Page
-      className={classes.root}
-      title="Resources"
-    >
+    <Page className={classes.root} title="Resources">
       <Container maxWidth={false}>
         <Box mt={3}>
           <MuiThemeProvider theme={themeTable}>
@@ -103,10 +94,9 @@ const Resources = () => {
               title="Resources "
               isLoading={loader}
               columns={[
-                { title: 'ID', field: 'id', editable: 'never' },
+                // { title: 'ID', field: 'id', editable: 'never' },
                 { title: 'Name', field: 'name' },
-                { title: 'Url', field: 'url' },
-                { title: 'Announcement', field: 'announcement_id.title' },
+                { title: 'Url', field: 'url' }
               ]}
               data={resources}
               editable={{
@@ -115,7 +105,7 @@ const Resources = () => {
                 }
               }}
               // eslint-disable-next-line
-              onRowClick={((evt, selectedRow) => setSelectedRow(selectedRow.tableData.id))}
+              onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
               options={{
                 actionsColumnIndex: -1,
                 search: false,
@@ -126,49 +116,61 @@ const Resources = () => {
                   color: '#FFF',
                   '&:hover': {
                     color: '#FFF'
-                  },
+                  }
                 },
                 rowStyle: (rowData) => ({
                   fontFamily: 'Roboto',
-                  backgroundColor: (selectedRow === rowData.tableData.id)
-                    ? theme.palette.background.dark : theme.palette.background.default,
+                  backgroundColor:
+                    selectedRow === rowData.tableData.id
+                      ? theme.palette.background.dark
+                      : theme.palette.background.default,
                   color: theme.palette.text.primary
                 })
               }}
               actions={[
-                { // custom action for update in new tabaaa
+                {
+                  // custom action for update in new tabaaa
                   icon: 'create',
                   tooltip: 'Update Announcement',
                   onClick: (event, rowData) => {
                     const { id, name, url, announcement_id: announObj } = rowData;
                     const { id: announId } = announObj;
-                    navigate(`/app/add-resources/${id}`, {
-                      state: {
-                        resourceObj: {
-                          name,
-                          url,
-                          announId
+                    navigate(
+                      `/app/add-resources/${id}`,
+                      {
+                        state: {
+                          resourceObj: {
+                            name,
+                            url,
+                            announId
+                          }
                         }
-                      }
-                    }, { replace: true });
+                      },
+                      { replace: true }
+                    );
                   }
                 },
-                { // overrides in-built add action in material table
+                {
+                  // overrides in-built add action in material table
                   icon: 'add',
                   tooltip: 'Add Resources',
                   position: 'toolbar',
                   isFreeAction: true,
                   onClick: () => {
                     // Routing to Resources Form on /app/add-resources/new
-                    navigate(`/app/add-resources/${'new'}`, {
-                      state: {
-                        resourceObj: {
-                          name: '',
-                          url: '',
-                          announId: ''
+                    navigate(
+                      `/app/add-resources/${'new'}`,
+                      {
+                        state: {
+                          resourceObj: {
+                            name: '',
+                            url: '',
+                            announId: ''
+                          }
                         }
-                      }
-                    }, { replace: true });
+                      },
+                      { replace: true }
+                    );
                   }
                 }
               ]}

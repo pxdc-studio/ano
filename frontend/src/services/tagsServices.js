@@ -8,6 +8,12 @@ export function getAllTags() {
     });
 }
 
+export function getTagsByName(slug) {
+    return http.get(`${apiEndpoint}/slug/${slug}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` },
+    });
+}
+
 export function getSingleTag(rescourceId) {
     return http.get(`${apiEndpoint}/${rescourceId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` },
