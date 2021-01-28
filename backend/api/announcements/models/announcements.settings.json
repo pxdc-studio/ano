@@ -17,24 +17,32 @@
     },
     "message": {
       "type": "string",
-      "maxLength": 4280
-    },
-    "author_id": {
-      "type": "biginteger"
-    },
-    "status": {
-      "type": "integer"
+      "maxLength": 280
     },
     "postdate": {
       "type": "date"
     },
     "resources": {
-      "collection": "resources",
-      "via": "announcement"
+      "collection": "resources"
+    },
+    "author": {
+      "plugin": "admin",
+      "model": "user"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "archived"
+      ],
+      "default": "active",
+      "required": false
     },
     "tags": {
-      "collection": "tags",
-      "via": "announcement"
+      "collection": "tags"
+    },
+    "synonyms": {
+      "collection": "synonyms"
     }
   }
 }

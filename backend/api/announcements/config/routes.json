@@ -2,6 +2,14 @@
   "routes": [
     {
       "method": "GET",
+      "path": "/announcements/user/:id",
+      "handler": "announcements.findByUser",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
       "path": "/announcements",
       "handler": "announcements.find",
       "config": {

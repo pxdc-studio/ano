@@ -8,26 +8,19 @@
   "options": {
     "increments": true,
     "timestamps": true,
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "attributes": {
-    "name": {
-      "type": "string"
-    },
     "slug": {
-      "type": "string"
+      "type": "string",
+      "unique": true
+    },
+    "author": {
+      "plugin": "admin",
+      "model": "user"
     },
     "synonyms": {
-      "collection": "synonyms",
-      "via": "tag"
-    },
-    "subscriptions": {
-      "collection": "subscriptions",
-      "via": "tag"
-    },
-    "announcement": {
-      "via": "tags",
-      "model": "announcements"
+      "collection": "synonyms"
     }
   }
 }

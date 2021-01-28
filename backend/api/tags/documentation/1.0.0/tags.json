@@ -522,75 +522,54 @@
           "id": {
             "type": "string"
           },
-          "name": {
-            "type": "string"
-          },
           "slug": {
             "type": "string"
           },
+          "author": {
+            "required": [
+              "id",
+              "email"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "firstname": {
+                "type": "string"
+              },
+              "lastname": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "password": {
+                "type": "string"
+              },
+              "resetPasswordToken": {
+                "type": "string"
+              },
+              "registrationToken": {
+                "type": "string"
+              },
+              "isActive": {
+                "type": "boolean"
+              },
+              "roles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "blocked": {
+                "type": "boolean"
+              }
+            }
+          },
           "synonyms": {
-            "type": "array",
-            "items": {
-              "required": [
-                "id"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "slug": {
-                  "type": "string"
-                },
-                "tag": {
-                  "type": "string"
-                },
-                "published_at": {
-                  "type": "string"
-                },
-                "created_by": {
-                  "type": "string"
-                },
-                "updated_by": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "subscriptions": {
-            "type": "array",
-            "items": {
-              "required": [
-                "id"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "digest": {
-                  "type": "string"
-                },
-                "author": {
-                  "type": "string"
-                },
-                "tag": {
-                  "type": "string"
-                },
-                "published_at": {
-                  "type": "string"
-                },
-                "created_by": {
-                  "type": "string"
-                },
-                "updated_by": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "announcement": {
             "required": [
               "id"
             ],
@@ -598,32 +577,14 @@
               "id": {
                 "type": "string"
               },
-              "title": {
+              "slug": {
                 "type": "string"
-              },
-              "message": {
-                "type": "string"
-              },
-              "author_id": {
-                "type": "integer"
-              },
-              "status": {
-                "type": "integer"
-              },
-              "postdate": {
-                "type": "string"
-              },
-              "resources": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
               },
               "tags": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "type": "string"
+              },
+              "author": {
+                "type": "string"
               },
               "published_at": {
                 "type": "string"
@@ -635,39 +596,19 @@
                 "type": "string"
               }
             }
-          },
-          "published_at": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
       "NewTags": {
         "properties": {
-          "name": {
-            "type": "string"
-          },
           "slug": {
             "type": "string"
           },
-          "synonyms": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "subscriptions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "announcement": {
+          "author": {
             "type": "string"
           },
-          "published_at": {
-            "type": "string",
-            "format": "date-time"
+          "synonyms": {
+            "type": "string"
           },
           "created_by": {
             "type": "string"

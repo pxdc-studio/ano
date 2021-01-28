@@ -1,11 +1,12 @@
 {
-    "eslint.codeAction.showDocumentation": {
-
-
-        "enable": true
-    },
-    "eslint.alwaysShowStatus": true,
-    "eslint.format.enable": true,
-    "eslint.run": "onSave",
-    "vsintellicode.python.completionsEnabled": false
+  "eslint.codeAction.showDocumentation": {
+    "enable": true
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.autoClosingQuotes": "always",
+  "eslint.alwaysShowStatus": true,
+  "eslint.format.enable": true,
+  "editor.formatOnSave": true,
+  "eslint.run": "onSave",
+  "vsintellicode.python.completionsEnabled": false
 }

@@ -11,15 +11,15 @@
     "draftAndPublish": true
   },
   "attributes": {
-    "name": {
-      "type": "string"
-    },
     "slug": {
       "type": "string"
     },
-    "tag": {
-      "via": "synonyms",
-      "model": "tags"
+    "tags": {
+      "collection": "tags"
+    },
+    "author": {
+      "plugin": "admin",
+      "model": "user"
     }
   }
 }

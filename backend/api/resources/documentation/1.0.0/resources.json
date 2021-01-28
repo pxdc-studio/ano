@@ -528,55 +528,49 @@
           "url": {
             "type": "string"
           },
-          "announcement": {
+          "author": {
             "required": [
-              "id"
+              "id",
+              "email"
             ],
             "properties": {
               "id": {
                 "type": "string"
               },
-              "title": {
+              "firstname": {
                 "type": "string"
               },
-              "message": {
+              "lastname": {
                 "type": "string"
               },
-              "author_id": {
-                "type": "integer"
-              },
-              "status": {
-                "type": "integer"
-              },
-              "postdate": {
+              "username": {
                 "type": "string"
               },
-              "resources": {
+              "email": {
+                "type": "string"
+              },
+              "password": {
+                "type": "string"
+              },
+              "resetPasswordToken": {
+                "type": "string"
+              },
+              "registrationToken": {
+                "type": "string"
+              },
+              "isActive": {
+                "type": "boolean"
+              },
+              "roles": {
                 "type": "array",
                 "items": {
                   "type": "string"
                 }
               },
-              "tags": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "published_at": {
-                "type": "string"
-              },
-              "created_by": {
-                "type": "string"
-              },
-              "updated_by": {
-                "type": "string"
+              "blocked": {
+                "type": "boolean"
               }
             }
-          },
-          "published_at": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -588,12 +582,8 @@
           "url": {
             "type": "string"
           },
-          "announcement": {
+          "author": {
             "type": "string"
-          },
-          "published_at": {
-            "type": "string",
-            "format": "date-time"
           },
           "created_by": {
             "type": "string"

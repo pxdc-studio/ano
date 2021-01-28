@@ -11,16 +11,20 @@
     "draftAndPublish": true
   },
   "attributes": {
-    "digest": {
-      "type": "string"
-    },
     "author": {
-      "model": "authors",
-      "via": "subscriptions"
+      "plugin": "admin",
+      "model": "user"
     },
-    "tag": {
-      "via": "subscriptions",
-      "model": "tags"
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "tag",
+        "synonym",
+        "author"
+      ]
+    },
+    "typeId": {
+      "type": "uid"
     }
   }
 }

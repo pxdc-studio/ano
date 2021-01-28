@@ -522,13 +522,10 @@
           "id": {
             "type": "string"
           },
-          "name": {
-            "type": "string"
-          },
           "slug": {
             "type": "string"
           },
-          "tag": {
+          "tags": {
             "required": [
               "id"
             ],
@@ -536,28 +533,13 @@
               "id": {
                 "type": "string"
               },
-              "name": {
-                "type": "string"
-              },
               "slug": {
                 "type": "string"
               },
-              "synonyms": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "subscriptions": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "announcement": {
+              "author": {
                 "type": "string"
               },
-              "published_at": {
+              "synonyms": {
                 "type": "string"
               },
               "created_by": {
@@ -565,6 +547,50 @@
               },
               "updated_by": {
                 "type": "string"
+              }
+            }
+          },
+          "author": {
+            "required": [
+              "id",
+              "email"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "firstname": {
+                "type": "string"
+              },
+              "lastname": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "password": {
+                "type": "string"
+              },
+              "resetPasswordToken": {
+                "type": "string"
+              },
+              "registrationToken": {
+                "type": "string"
+              },
+              "isActive": {
+                "type": "boolean"
+              },
+              "roles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "blocked": {
+                "type": "boolean"
               }
             }
           },
@@ -576,13 +602,13 @@
       },
       "NewSynonyms": {
         "properties": {
-          "name": {
-            "type": "string"
-          },
           "slug": {
             "type": "string"
           },
-          "tag": {
+          "tags": {
+            "type": "string"
+          },
+          "author": {
             "type": "string"
           },
           "published_at": {

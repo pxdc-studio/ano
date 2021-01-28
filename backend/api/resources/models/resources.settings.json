@@ -8,18 +8,20 @@
   "options": {
     "increments": true,
     "timestamps": true,
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "attributes": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "unique": true
     },
     "url": {
-      "type": "string"
+      "type": "string",
+      "unique": true
     },
-    "announcement": {
-      "via": "resources",
-      "model": "announcements"
+    "author": {
+      "plugin": "admin",
+      "model": "user"
     }
   }
 }
