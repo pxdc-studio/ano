@@ -8,23 +8,27 @@
   "options": {
     "increments": true,
     "timestamps": true,
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "attributes": {
-    "author": {
-      "plugin": "admin",
+    "user": {
+      "plugin": "users-permissions",
       "model": "user"
     },
-    "type": {
-      "type": "enumeration",
-      "enum": [
-        "tag",
-        "synonym",
-        "author"
-      ]
+    "tags": {
+      "type": "component",
+      "repeatable": true,
+      "component": "subscriptions.tags"
     },
-    "typeId": {
-      "type": "uid"
+    "synonyms": {
+      "type": "component",
+      "repeatable": true,
+      "component": "subscriptions.synonyms"
+    },
+    "authors": {
+      "type": "component",
+      "repeatable": true,
+      "component": "subscriptions.authors"
     }
   }
 }

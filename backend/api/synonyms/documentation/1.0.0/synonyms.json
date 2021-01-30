@@ -525,31 +525,6 @@
           "slug": {
             "type": "string"
           },
-          "tags": {
-            "required": [
-              "id"
-            ],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "slug": {
-                "type": "string"
-              },
-              "author": {
-                "type": "string"
-              },
-              "synonyms": {
-                "type": "string"
-              },
-              "created_by": {
-                "type": "string"
-              },
-              "updated_by": {
-                "type": "string"
-              }
-            }
-          },
           "author": {
             "required": [
               "id",
@@ -594,9 +569,27 @@
               }
             }
           },
-          "published_at": {
-            "type": "string",
-            "format": "date-time"
+          "tags": {
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "author": {
+                "type": "string"
+              },
+              "created_by": {
+                "type": "string"
+              },
+              "updated_by": {
+                "type": "string"
+              }
+            }
           }
         }
       },
@@ -605,15 +598,11 @@
           "slug": {
             "type": "string"
           },
-          "tags": {
-            "type": "string"
-          },
           "author": {
             "type": "string"
           },
-          "published_at": {
-            "type": "string",
-            "format": "date-time"
+          "tags": {
+            "type": "string"
           },
           "created_by": {
             "type": "string"

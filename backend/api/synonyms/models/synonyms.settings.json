@@ -8,18 +8,18 @@
   "options": {
     "increments": true,
     "timestamps": true,
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "attributes": {
     "slug": {
       "type": "string"
     },
-    "tags": {
-      "collection": "tags"
-    },
     "author": {
       "plugin": "admin",
       "model": "user"
+    },
+    "tags": {
+      "collection": "tags"
     }
   }
 }

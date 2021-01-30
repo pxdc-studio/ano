@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_subscriptions_authors",
+  "info": {
+    "name": "authors",
+    "icon": "address-book",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "author": {
+      "plugin": "users-permissions",
+      "model": "user"
+    },
+    "exclude_tags": {
+      "collection": "tags"
+    }
+  }
+}

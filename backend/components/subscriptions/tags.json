@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_subscriptions_tags",
+  "info": {
+    "name": "tags",
+    "icon": "align-justify",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "tag": {
+      "model": "tags"
+    },
+    "exclude_authors": {
+      "plugin": "admin",
+      "collection": "user"
+    }
+  }
+}

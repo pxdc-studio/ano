@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_subscriptions_synonyms",
+  "info": {
+    "name": "synonyms",
+    "icon": "align-center",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "synonym": {
+      "model": "synonyms"
+    },
+    "exclude_authors": {
+      "plugin": "users-permissions",
+      "collection": "user"
+    }
+  }
+}

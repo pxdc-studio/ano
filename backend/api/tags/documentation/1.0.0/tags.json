@@ -568,34 +568,6 @@
                 "type": "boolean"
               }
             }
-          },
-          "synonyms": {
-            "required": [
-              "id"
-            ],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "slug": {
-                "type": "string"
-              },
-              "tags": {
-                "type": "string"
-              },
-              "author": {
-                "type": "string"
-              },
-              "published_at": {
-                "type": "string"
-              },
-              "created_by": {
-                "type": "string"
-              },
-              "updated_by": {
-                "type": "string"
-              }
-            }
           }
         }
       },
@@ -605,9 +577,6 @@
             "type": "string"
           },
           "author": {
-            "type": "string"
-          },
-          "synonyms": {
             "type": "string"
           },
           "created_by": {

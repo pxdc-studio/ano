@@ -18,9 +18,6 @@
     "author": {
       "plugin": "admin",
       "model": "user"
-    },
-    "synonyms": {
-      "collection": "synonyms"
     }
   }
 }

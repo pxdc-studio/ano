@@ -26,7 +26,7 @@
       "collection": "resources"
     },
     "author": {
-      "plugin": "admin",
+      "plugin": "users-permissions",
       "model": "user"
     },
     "status": {
