@@ -30,6 +30,7 @@
     "react/jsx-wrap-multilines": "off",
     "react/jsx-closing-bracket-location": "off",
     "no-plusplus": "off",
+    "import/prefer-default-export": "off",
     "react/jsx-indent": "off",
     "react-hooks/exhaustive-deps": "off",
     "react/forbid-prop-types": "off",
