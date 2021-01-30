@@ -13,7 +13,8 @@
   "attributes": {
     "slug": {
       "type": "string",
-      "unique": true
+      "unique": true,
+      "required": true
     },
     "author": {
       "plugin": "admin",

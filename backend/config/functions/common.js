@@ -1,3 +1,5 @@
+const slugify = require("slugify");
+
 exports.createTags = async function (input_tags, authorId) {
   /**
    * Tags Cleanup
@@ -16,6 +18,13 @@ exports.createTags = async function (input_tags, authorId) {
   for (var i = 0; i < input_tags.length; i++) {
     let item = input_tags[i];
     if (typeof item == "object") {
+      //slugify it to make sure its a slug
+      item.slug = slugify(item.slug, {
+        replacement: "-",
+        lower: true,
+        strict: true,
+      });
+
       tags_to_insert.push(item);
     } else {
       tags.push(item);
@@ -133,19 +142,53 @@ exports.createSynonyms = async function (input_synonyms, authorId) {
   async function create() {
     if (synonyms_to_insert.length > 0) {
       const exist_synonyms = await strapi.query("synonyms").find({
-        slug_in: synonyms_to_insert.map((r) => r.slug),
+        slug_in: synonyms_to_insert.map((r) =>
+          slugify(r.slug, {
+            replacement: "-",
+            lower: true,
+            strict: true,
+          })
+        ),
       });
 
       synonyms = synonyms.concat(exist_synonyms.map((e) => e.id));
 
       synonyms_to_insert = synonyms_to_insert.filter(
-        (item) => !exist_synonyms.map((e) => e.slug).includes(item.slug)
+        (item) =>
+          !exist_synonyms
+            .map((e) => e.slug)
+            .includes(
+              slugify(item.slug, {
+                replacement: "-",
+                lower: true,
+                strict: true,
+              })
+            )
       );
 
       synonyms_to_insert.map(async (r) => {
+        r.slug = slugify(r.slug, {
+          replacement: "-",
+          lower: true,
+          strict: true,
+        });
+
+        let exist_tags = await strapi.query("tags").find({
+          // convert non slug type to slug
+          slug_in: r.tags.map((tag) =>
+            slugify(tag, {
+              replacement: "-",
+              lower: true,
+              strict: true,
+            })
+          ),
+        });
+
+        exist_tags = exist_tags.map((tag) => tag.id);
+
         return await strapi
           .query("synonyms")
-          .create({ slug: r.slug, author: authorId });
+          .create({ slug: r.slug, author: authorId, tags: exist_tags });
       });
 
       let inserted_tags = await Promise.all(synonyms_to_insert);

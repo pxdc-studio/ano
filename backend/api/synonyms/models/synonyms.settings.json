@@ -12,10 +12,12 @@
   },
   "attributes": {
     "slug": {
-      "type": "string"
+      "type": "string",
+      "required": true,
+      "unique": true
     },
     "author": {
-      "plugin": "admin",
+      "plugin": "users-permissions",
       "model": "user"
     },
     "tags": {

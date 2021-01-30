@@ -13,6 +13,7 @@
   "dependencies": {
     "knex": "<0.20.0",
     "lodash": "^4.17.20",
+    "slugify": "^1.4.6",
     "sqlite3": "latest",
     "strapi": "^3.4.5",
     "strapi-admin": "3.4.1",

@@ -14,7 +14,7 @@
       "name": "Apache 2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
     },
-    "x-generation-date": "01/30/2021 1:19:19 AM"
+    "x-generation-date": "01/30/2021 12:25:50 PM"
   },
   "x-strapi-config": {
     "path": "/documentation",
@@ -6394,7 +6394,8 @@
           },
           "tags": {
             "required": [
-              "id"
+              "id",
+              "slug"
             ],
             "properties": {
               "id": {
@@ -6416,7 +6417,8 @@
           },
           "synonyms": {
             "required": [
-              "id"
+              "id",
+              "slug"
             ],
             "properties": {
               "id": {
@@ -6843,7 +6845,8 @@
                 },
                 "tag": {
                   "required": [
-                    "id"
+                    "id",
+                    "slug"
                   ],
                   "properties": {
                     "id": {
@@ -6923,7 +6926,8 @@
                 },
                 "synonym": {
                   "required": [
-                    "id"
+                    "id",
+                    "slug"
                   ],
                   "properties": {
                     "id": {
@@ -7058,7 +7062,8 @@
                 },
                 "exclude_tags": {
                   "required": [
-                    "id"
+                    "id",
+                    "slug"
                   ],
                   "properties": {
                     "id": {
@@ -7101,7 +7106,8 @@
                 },
                 "tag": {
                   "required": [
-                    "id"
+                    "id",
+                    "slug"
                   ],
                   "properties": {
                     "id": {
@@ -7181,7 +7187,8 @@
                 },
                 "synonym": {
                   "required": [
-                    "id"
+                    "id",
+                    "slug"
                   ],
                   "properties": {
                     "id": {
@@ -7316,7 +7323,8 @@
                 },
                 "exclude_tags": {
                   "required": [
-                    "id"
+                    "id",
+                    "slug"
                   ],
                   "properties": {
                     "id": {
@@ -7349,7 +7357,8 @@
       },
       "Synonyms": {
         "required": [
-          "id"
+          "id",
+          "slug"
         ],
         "properties": {
           "id": {
@@ -7361,16 +7370,11 @@
           "author": {
             "required": [
               "id",
+              "username",
               "email"
             ],
             "properties": {
               "id": {
-                "type": "string"
-              },
-              "firstname": {
-                "type": "string"
-              },
-              "lastname": {
                 "type": "string"
               },
               "username": {
@@ -7379,32 +7383,42 @@
               "email": {
                 "type": "string"
               },
+              "provider": {
+                "type": "string"
+              },
               "password": {
                 "type": "string"
               },
               "resetPasswordToken": {
                 "type": "string"
               },
-              "registrationToken": {
+              "confirmationToken": {
                 "type": "string"
               },
-              "isActive": {
+              "confirmed": {
                 "type": "boolean"
-              },
-              "roles": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
               },
               "blocked": {
                 "type": "boolean"
+              },
+              "role": {
+                "type": "string"
+              },
+              "fullname": {
+                "type": "string"
+              },
+              "created_by": {
+                "type": "string"
+              },
+              "updated_by": {
+                "type": "string"
               }
             }
           },
           "tags": {
             "required": [
-              "id"
+              "id",
+              "slug"
             ],
             "properties": {
               "id": {
@@ -7427,6 +7441,9 @@
         }
       },
       "NewSynonyms": {
+        "required": [
+          "slug"
+        ],
         "properties": {
           "slug": {
             "type": "string"
@@ -7447,7 +7464,8 @@
       },
       "Tags": {
         "required": [
-          "id"
+          "id",
+          "slug"
         ],
         "properties": {
           "id": {
@@ -7503,6 +7521,9 @@
         }
       },
       "NewTags": {
+        "required": [
+          "slug"
+        ],
         "properties": {
           "slug": {
             "type": "string"

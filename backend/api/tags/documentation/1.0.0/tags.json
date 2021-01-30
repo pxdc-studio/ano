@@ -516,7 +516,8 @@
     "schemas": {
       "Tags": {
         "required": [
-          "id"
+          "id",
+          "slug"
         ],
         "properties": {
           "id": {
@@ -572,6 +573,9 @@
         }
       },
       "NewTags": {
+        "required": [
+          "slug"
+        ],
         "properties": {
           "slug": {
             "type": "string"

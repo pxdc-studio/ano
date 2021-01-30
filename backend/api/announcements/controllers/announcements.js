@@ -110,37 +110,30 @@ module.exports = {
   },
   async findByOwner(ctx) {
     let user = ctx.state.user;
-    let authorId = user;
+    const authorId = user ? user.id : -1; // none reachable user id
 
-    let { limit = 20, start = 0 } = ctx.query;
+    let { pageSize = 20, page = 1 } = ctx.query;
 
-    let model = strapi.query("announcements");
-
-    let raw = model.find({
-      _start: start,
-      _limit: limit,
-      _sort: "published_at:desc",
-      author: 1,
-    });
-
-    let count = model.count({ author: 1 });
-
-    [raw, count] = await Promise.all([raw, count]);
+    let raw = await strapi
+      .query("announcements")
+      .model.query((q) => {
+        q.where("author", authorId);
+        q.orderBy("published_at", "desc");
+      })
+      .fetchPage({
+        pageSize,
+        page,
+      });
 
     let result = raw.map((item) =>
       sanitizeEntity(item, { model: strapi.models.announcements })
     );
 
-    return {
-      start,
-      limit,
-      total: count,
-      data: result,
-    };
+    return result;
   },
   async create(ctx) {
-    let user = ctx.state.user;
-    let authorId = 1;
+    const user = ctx.state.user;
+    const authorId = user ? user.id : -1; // none reachable user id
 
     let {
       title,
@@ -172,47 +165,47 @@ module.exports = {
     }
   },
   async update(ctx) {
-    let user = ctx.state.user;
-    let authorId = 1;
-    let { id } = ctx.params;
-
-    if (!id) {
-      return { status: 400 };
-    }
-
-    let isYourPost = await strapi
-      .query("announcements")
-      .find({ author: authorId, id: id });
-
-    if (!isYourPost) {
-      return { status: 400 };
-    }
-
-    let {
-      title,
-      message,
-      tags: input_tags,
-      resources: input_resources,
-      synonyms,
-    } = ctx.request.body;
-
     try {
-      let [_tags, _resouces] = await Promise.all([
-        createTags(input_tags, authorId),
-        createResources(input_resources, authorId),
-      ]);
+      // let user = ctx.state.user;
+      // let authorId = 1;
+      // let { id } = ctx.params;
 
-      await strapi.query("announcements").update(
-        { id: id },
-        {
-          ...(title && { title }),
-          ...(message && { message }),
-          tags: _tags,
-          resources: _resouces,
-          synonyms: synonyms,
-          author: 1,
-        }
-      );
+      // if (!id) {
+      //   return { status: 400 };
+      // }
+
+      // let isYourPost = await strapi
+      //   .query("announcements")
+      //   .find({ author: authorId, id: id });
+
+      // if (!isYourPost) {
+      //   return { status: 400 };
+      // }
+
+      // let {
+      //   title,
+      //   message,
+      //   tags: input_tags,
+      //   resources: input_resources,
+      //   synonyms,
+      // } = ctx.request.body;
+
+      //   let [_tags, _resouces] = await Promise.all([
+      //     createTags(input_tags, authorId),
+      //     createResources(input_resources, authorId),
+      //   ]);
+
+      //   await strapi.query("announcements").update(
+      //     { id: id },
+      //     {
+      //       ...(title && { title }),
+      //       ...(message && { message }),
+      //       tags: _tags,
+      //       resources: _resouces,
+      //       synonyms: synonyms,
+      //       author: 1,
+      //     }
+      //   );
 
       return { status: 200 };
     } catch (e) {

@@ -674,7 +674,8 @@
           },
           "tags": {
             "required": [
-              "id"
+              "id",
+              "slug"
             ],
             "properties": {
               "id": {
@@ -696,7 +697,8 @@
           },
           "synonyms": {
             "required": [
-              "id"
+              "id",
+              "slug"
             ],
             "properties": {
               "id": {
