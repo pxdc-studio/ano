@@ -101,7 +101,7 @@ exports.createResources = async function (input_resources, authorId) {
       resources_to_insert.map(async (r) => {
         return await strapi
           .query("resources")
-          .create({ name: r.name, url: r.url, author: authorId });
+          .create({ slug: r.slug, url: r.url, author: authorId });
       });
 
       let inserted_tags = await Promise.all(resources_to_insert);

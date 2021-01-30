@@ -7,6 +7,28 @@
 const { createTags, createResources } = strapi.config.functions["common"];
 
 module.exports = {
+  async autocomplete(ctx) {
+    let { slug } = ctx.params;
+
+    slug = slug = slugify(slug, {
+      replacement: "-",
+      lower: true,
+      strict: true,
+    });
+
+    let raw = await strapi
+      .query("resources")
+      .model.query((q) => {
+        q.where("resources.slug", "LIKE", `${slug}%`);
+        q.orderBy("created_at", "desc");
+      })
+      .fetchAll();
+
+    const result = raw.map((item) =>
+      sanitizeEntity(item, { model: strapi.models.resources })
+    );
+    return result;
+  },
   async find(ctx) {
     const user = ctx.state.user;
     const authorId = user ? user.id : -1; // none reachable user id

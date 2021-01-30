@@ -593,13 +593,14 @@
           },
           "resources": {
             "required": [
-              "id"
+              "id",
+              "slug"
             ],
             "properties": {
               "id": {
                 "type": "string"
               },
-              "name": {
+              "slug": {
                 "type": "string"
               },
               "url": {

@@ -11,9 +11,10 @@
     "draftAndPublish": false
   },
   "attributes": {
-    "name": {
+    "slug": {
       "type": "string",
-      "unique": true
+      "unique": true,
+      "required": true
     },
     "url": {
       "type": "string",

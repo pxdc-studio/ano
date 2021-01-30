@@ -2,6 +2,14 @@
   "routes": [
     {
       "method": "GET",
+      "path": "/resources/find/:slug",
+      "handler": "resources.autocomplete",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
       "path": "/resources",
       "handler": "resources.find",
       "config": {
