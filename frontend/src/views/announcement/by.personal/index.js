@@ -25,6 +25,19 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3),
     paddingRight: theme.spacing(20)
+  },
+  resources: {
+    padding: 8,
+    background: '#eee',
+    '& div': {
+      display: 'flex',
+      flexDirection: 'row',
+      padding: 8,
+      '& span.col': {
+        flex: 1
+      },
+      '& span:first-of-type': { width: 20 }
+    }
   }
 }));
 // MUI Theme Provider for using custom fonts
@@ -111,14 +124,20 @@ const AnnouncementListView = ({ auth }) => {
                   //   render: (o) => `${o.author.firstname} ${o.author.lastname}`
                   // },
                   { title: 'Title', field: 'title' },
-                  { title: 'Message', field: 'message' },
+                  // { title: 'Message', field: 'message' },
                   {
                     title: 'Status',
-                    render: () => (
+                    render: (rowData) => (
                       <>
                         <ButtonGroup size="small" aria-label="small outlined button group">
-                          <Button>Active</Button>
-                          <Button>Archived</Button>
+                          <Button style={{ backgroundColor: rowData.status == 'active' ? '#eee' : 'white' }}>
+                            Active
+                          </Button>
+                          <Button
+                            style={{ backgroundColor: rowData.status.toLowerCase() == 'archived' ? '#bbb' : 'white' }}
+                          >
+                            Archived
+                          </Button>
                         </ButtonGroup>
                       </>
                     )
@@ -144,21 +163,28 @@ const AnnouncementListView = ({ auth }) => {
                   // },
                 ]}
                 data={privateAnnouncements}
-                detailPanel={(rowData) => {
-                  return rowData.tags.map((tag) => {
-                    return (
-                      <>
-                        <Grid container direction="row" justify="center" alignItems="center">
-                          <Grid item>
-                            <Box m={2} style={{ width: '100%' }}>
-                              <Chip label={tag.name} variant="outlined" size="small" color="primary" />
-                            </Box>
-                          </Grid>
-                        </Grid>
-                      </>
-                    );
-                  });
-                }}
+                detailPanel={[
+                  {
+                    icon: 'description',
+                    tooltip: 'Show Resource',
+                    render: (rowData) => {
+                      return (
+                        <div className={classes.resources}>
+                          <h3>Resources</h3>
+                          <ul>
+                            {rowData.resources.map((item, index) => (
+                              <div key={index}>
+                                <span>{index + 1}</span>
+                                <span className="col">{item.slug}</span>
+                                <span className="col">{item.url}</span>
+                              </div>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    }
+                  }
+                ]}
                 // editable={{
                 //   onRowDelete: async ({ id }) => {
                 //     await handleDeleteAnnouncement(id);

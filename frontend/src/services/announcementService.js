@@ -14,9 +14,9 @@ export function getAllAnnouncements() {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
   });
 }
-// hits api/announcements/user/:id
-export function getAllAnnouncementsByUser(userId) {
-  return http.get(`${apiEndpoint}/user/${userId}`, {
+// hits api/announcements/me
+export function getAllAnnouncementsByUser() {
+  return http.get(`${apiEndpoint}/me`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
   });
 }

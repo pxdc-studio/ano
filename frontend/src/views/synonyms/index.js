@@ -1,9 +1,7 @@
+/* eslint-disable */
+
 import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Container,
-  makeStyles,
-} from '@material-ui/core';
+import { Box, Chip, Container, makeStyles } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
 import { useNavigate } from 'react-router-dom';
@@ -24,18 +22,17 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3),
     paddingRight: theme.spacing(20)
-
   }
 }));
 // MUI Theme Provider for using custom fonts
 const themeTable = createMuiTheme({
   palette: {
     primary: {
-      main: '#3f51b5',
+      main: '#3f51b5'
     },
     secondary: {
-      main: '#3f51b5',
-    },
+      main: '#3f51b5'
+    }
   },
   typography: {
     fontFamily: [
@@ -49,10 +46,9 @@ const themeTable = createMuiTheme({
       'sans-serif',
       '"Apple Color Emoji"',
       '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
-    ].join(','),
+      '"Segoe UI Symbol"'
+    ].join(',')
   }
-
 });
 
 const Synonyms = () => {
@@ -93,10 +89,7 @@ const Synonyms = () => {
   };
 
   return (
-    <Page
-      className={classes.root}
-      title="Tags"
-    >
+    <Page className={classes.root} title="Tags">
       <Container maxWidth={false}>
         <Box mt={3}>
           <MuiThemeProvider theme={themeTable}>
@@ -104,10 +97,16 @@ const Synonyms = () => {
               title="Synonyms "
               isLoading={loader}
               columns={[
-                { title: 'ID', field: 'id', editable: 'never' },
-                { title: 'Name', field: 'name' },
-                { title: 'Slug', field: 'slug' },
-                { title: 'Tag', field: 'tag.name' },
+                { title: 'Name', field: 'slug', render: (dataRow) => dataRow.slug.split('-').join(' ') },
+                {
+                  title: 'Tags',
+                  field: 'tags',
+                  render: (dataRow) => {
+                    return dataRow.tags.map((tag) => (
+                      <Chip key={tag.id} label={tag.slug.split('-').join(' ')} color="secondary" />
+                    ));
+                  }
+                }
               ]}
               data={synonyms}
               editable={{
@@ -116,7 +115,7 @@ const Synonyms = () => {
                 }
               }}
               // eslint-disable-next-line
-              onRowClick={((evt, selectedRow) => setSelectedRow(selectedRow.tableData.id))}
+              onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
               options={{
                 actionsColumnIndex: -1,
                 search: false,
@@ -127,49 +126,61 @@ const Synonyms = () => {
                   color: '#FFF',
                   '&:hover': {
                     color: '#FFF'
-                  },
+                  }
                 },
                 rowStyle: (rowData) => ({
                   fontFamily: 'Roboto',
-                  backgroundColor: (selectedRow === rowData.tableData.id)
-                    ? theme.palette.background.dark : theme.palette.background.default,
+                  backgroundColor:
+                    selectedRow === rowData.tableData.id
+                      ? theme.palette.background.dark
+                      : theme.palette.background.default,
                   color: theme.palette.text.primary
                 })
               }}
               actions={[
-                { // custom action for update in new tab
+                {
+                  // custom action for update in new tab
                   icon: 'create',
                   tooltip: 'Update Tags',
                   onClick: (event, rowData) => {
                     const { id, name, slug, tag: tagObj } = rowData;
                     const { id: tag } = tagObj;
-                    navigate(`/app/add-synonyms/${id}`, {
-                      state: {
-                        synonymObj: {
-                          name,
-                          slug,
-                          tag,
+                    navigate(
+                      `/app/add-synonyms/${id}`,
+                      {
+                        state: {
+                          synonymObj: {
+                            name,
+                            slug,
+                            tag
+                          }
                         }
-                      }
-                    }, { replace: true });
+                      },
+                      { replace: true }
+                    );
                   }
                 },
-                { // overrides in-built add action in material table
+                {
+                  // overrides in-built add action in material table
                   icon: 'add',
                   tooltip: 'Add Synonym',
                   position: 'toolbar',
                   isFreeAction: true,
                   onClick: () => {
                     // Routing to Synonym Form on path: /app/add-synonyms/new
-                    navigate(`/app/add-synonyms/${'new'}`, {
-                      state: {
-                        synonymObj: {
-                          name: '',
-                          slug: '',
-                          tag: '',
+                    navigate(
+                      `/app/add-synonyms/${'new'}`,
+                      {
+                        state: {
+                          synonymObj: {
+                            name: '',
+                            slug: '',
+                            tag: ''
+                          }
                         }
-                      }
-                    }, { replace: true });
+                      },
+                      { replace: true }
+                    );
                   }
                 }
               ]}

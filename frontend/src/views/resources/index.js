@@ -61,6 +61,7 @@ const Resources = () => {
   const fetchAllResources = async () => {
     try {
       const { status, data } = await getAllResources();
+      console.log(data);
       if (status === 200) {
         setResources(data);
         setLoader(false);
@@ -94,8 +95,7 @@ const Resources = () => {
               title="Resources "
               isLoading={loader}
               columns={[
-                // { title: 'ID', field: 'id', editable: 'never' },
-                { title: 'Name', field: 'name' },
+                { title: 'Name', field: 'slug', render: (dataRow) => dataRow.slug.split('-').join(' ') },
                 { title: 'Url', field: 'url' }
               ]}
               data={resources}

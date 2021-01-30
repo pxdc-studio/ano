@@ -3,3 +3,5 @@ export const STAGE = {
   ADD_TAG: 'ADD_TAG',
   EDIT_TAG: 'EDIT_TAG'
 };
+
+export default STAGE;

@@ -1,3 +1,5 @@
-import React from 'react';
+import { createContext } from 'react';
 
-export const StageContext = React.createContext();
+export const StageContext = createContext();
+
+export default StageContext;

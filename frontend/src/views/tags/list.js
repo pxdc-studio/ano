@@ -1,6 +1,6 @@
 /* eslint-disable */
 import React, { useContext, useEffect, useState } from 'react';
-import { Box, Container, TextField, makeStyles } from '@material-ui/core';
+import { Box, Container, TextField, makeStyles, Chip } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
 import { useNavigate } from 'react-router-dom';
@@ -143,14 +143,24 @@ const Tags = () => {
               title="Tags"
               isLoading={loader}
               columns={[
-                { title: 'ID', field: 'id', editable: 'never' },
-                // { title: 'Name', field: 'name', render: (row) => row.slug.split('-').join(' ') },
-                { title: 'Slug', field: 'slug' },
+                // { title: 'ID', field: 'id', editable: 'never' },
                 {
-                  title: 'Author',
-                  field: 'author',
-                  render: (row) => `${row.author?.firstname} ${row.author?.lastname}`
-                }
+                  title: 'Name',
+                  field: 'name',
+                  render: (row) => (
+                    <Chip
+                      size="small"
+                      // avatar={<Avatar>M</Avatar>}
+                      label={row.slug.split('-').join(' ')}
+                    />
+                  )
+                },
+                { title: 'Slug', field: 'slug' }
+                // {
+                //   title: 'Author',
+                //   field: 'author',
+                //   render: (row) => `${row.author?.firstname} ${row.author?.lastname}`
+                // }
                 // { title: 'Announcement', field: 'announcement_id.title' },
               ]}
               data={tags}
@@ -187,7 +197,7 @@ const Tags = () => {
                   icon: 'create',
                   tooltip: 'Update Tags',
                   onClick: (event, rowData) => {
-                    setState(update(state, { stage: { $set: STAGE.EDIT_TAG }, form: { $set: rowData } }));
+                    // setState(update(state, { stage: { $set: STAGE.EDIT_TAG }, form: { $set: rowData } }));
                   }
                 },
                 {

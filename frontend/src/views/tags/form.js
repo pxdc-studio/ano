@@ -42,7 +42,7 @@ const Form = () => {
           variant="outlined"
           fullWidth
           value={state.form?.slug || ''}
-          onChange={(e) => setState(update(state, { form: { slug: { $set: e.target.value } } }))}
+          // onChange={(e) => setState(update(state, { form: { slug: { $set: e.target.value } } }))}
         />
       </div>
     </Modal>

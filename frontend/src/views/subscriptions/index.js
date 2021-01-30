@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useEffect, useState } from 'react';
 import {
   Box,
@@ -9,7 +10,10 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Chip,
+  Avatar,
+  Popover
 } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
@@ -18,6 +22,9 @@ import { Search as SearchIcon, RotateCw as ResetIcon } from 'react-feather';
 import Page from 'src/components/Page';
 import { getAllSubscriptions, deleteSubscription, getFilterData } from 'src/services/subscriptionService';
 import { toast } from 'react-toastify';
+import Autocomplete from '@material-ui/lab/Autocomplete';
+import PopupState, { bindTrigger, bindPopover } from 'material-ui-popup-state';
+
 /**
  * path: /app/subscriptions
  *      description: subscriptions CRUD
@@ -31,18 +38,17 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3),
     paddingRight: theme.spacing(20)
-
   }
 }));
 // MUI Theme Provider for using custom fonts
 const themeTable = createMuiTheme({
   palette: {
     primary: {
-      main: '#3f51b5',
+      main: '#3f51b5'
     },
     secondary: {
-      main: '#3f51b5',
-    },
+      main: '#3f51b5'
+    }
   },
   typography: {
     fontFamily: [
@@ -56,10 +62,9 @@ const themeTable = createMuiTheme({
       'sans-serif',
       '"Apple Color Emoji"',
       '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
-    ].join(','),
+      '"Segoe UI Symbol"'
+    ].join(',')
   }
-
 });
 
 const Subs = () => {
@@ -91,7 +96,7 @@ const Subs = () => {
       setLoader(false);
     }
   };
-  //Filtered data bilding function 
+  //Filtered data bilding function
   const handleChange = ({ target: { name, value } }) => {
     setQueryObj({ ...queryObj, [name]: value });
   };
@@ -126,153 +131,50 @@ const Subs = () => {
     }
   };
 
+  const top100Films = [
+    { title: 'Mr A', year: 1994 },
+    { title: 'Mr B', year: 1972 },
+    { title: 'Mrs C', year: 1974 }
+  ];
+
   return (
-    <Page
-      className={classes.root}
-      title="Tags"
-    >
+    <Page className={classes.root} title="Tags">
       <Container maxWidth={false}>
         <Box mt={3}>
           <MuiThemeProvider theme={themeTable}>
-            <Grid container direction="row" justify="flex-start" alignItems="center" spacing={1}>
-              <Grid item>
-                <Box mb={2}>
-                  <TextField
-                    name="authorName"
-                    value={queryObj.authorName}
-                    onChange={handleChange}
-                    label="Author Name"
-                    size="medium" />
-                </Box>
-              </Grid>
-              <Grid item>
-                <Box mb={2}>
-                  <FormControl fullWidth>
-                    <InputLabel id="demo-simple-select-label">Tags Status</InputLabel>
-                    <Select
-                      name="authStatus"
-                      value={queryObj.authStatus}
-                      onChange={handleChange}
-                      fullWidth
-                    >
-                      <MenuItem value={'author.name_eq'}>Contain</MenuItem>
-                      <MenuItem value={'author.name_ne'}>Not Contain</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-              </Grid>
-              <Grid item>
-                <Box mb={2}>
-                  <TextField
-                    name="tagName"
-                    value={queryObj.tagName}
-                    onChange={handleChange}
-                    label="Tag Name"
-                    size="medium" />
-                </Box>
-              </Grid>
-              <Grid item>
-                <Box mb={2}>
-                  <FormControl fullWidth>
-                    <InputLabel id="demo-simple-select-label">Authors Satus</InputLabel>
-                    <Select
-                      labelId="demo-simple-select-label"
-                      name="tagStatus"
-                      value={queryObj.tagStatus}
-                      onChange={handleChange}
-                      fullWidth
-                    >
-                      <MenuItem value={'tag.name_eq'}>Contain</MenuItem>
-                      <MenuItem value={'tag.name_ne'}>Not Contain</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-              </Grid>
-              <Grid item>
-                <Box mb={2}>
-                  <Button color="primary" variant="contained" onClick={handleSubmitFiltered} endIcon={<SearchIcon />}>Search </Button>
-                </Box>
-              </Grid>
-              <Grid item>
-                <Box mb={2}>
-                  <Button color="primary" variant="contained" onClick={handleReset} endIcon={<ResetIcon />}>Reset </Button>
-                </Box>
-              </Grid>
-            </Grid>
-            <MaterialTable
-              title="Subscriptions "
-              isLoading={loader}
-              columns={[
-                { title: 'ID', field: 'id', editable: 'never' },
-                { title: 'Digest', field: 'digest' },
-                { title: 'Authors', field: 'author.name' },
-                { title: 'Tags', field: 'tag.name' },
-              ]}
-              data={subscriptions}
-              editable={{
-                onRowDelete: async ({ id }) => {
-                  await handleDeleteSubscription(id);
-                }
-              }}
-              // eslint-disable-next-line
-              onRowClick={((evt, selectedRow) => setSelectedRow(selectedRow.tableData.id))}
-              options={{
-                actionsColumnIndex: -1,
-                search: false,
-                filtering: true,
-                paging: false,
-                headerStyle: {
-                  backgroundColor: theme.palette.primary.main,
-                  color: '#FFF',
-                  '&:hover': {
-                    color: '#FFF'
-                  },
-                },
-                rowStyle: (rowData) => ({
-                  fontFamily: 'Roboto',
-                  backgroundColor: (selectedRow === rowData.tableData.id)
-                    ? theme.palette.background.dark : theme.palette.background.default,
-                  color: theme.palette.text.primary
+            <h3>Subcribed Authors</h3>
+            <Autocomplete
+              id="tags-outlined"
+              options={top100Films}
+              getOptionLabel={(option) => option.title}
+              defaultValue={[top100Films[1]]}
+              filterSelectedOptions
+              multiple
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => {
+                  return <ChipWithPopper {...getTagProps({ index })} label={option.title} />;
                 })
-              }}
-              actions={[
-                { // custom action for update in new tab
-                  icon: 'create',
-                  tooltip: 'Update Subscriptions',
-                  onClick: (event, rowData) => {
-                    const { id, digest, author: authorObj, tag: tagObj } = rowData;
-                    const { id: author } = authorObj;
-                    const { id: tag } = tagObj;
-                    navigate(`/app/add-subscriptions/${id}`, {
-                      state: {
-                        subscribeObj: {
-                          digest,
-                          author,
-                          tag
-                        }
-                      }
-                    }, { replace: true });
-                  }
-                },
-                { // overrides in-built add action in material table
-                  // Announcement routing to Subcription Form path: /app/add-subscriptions/new
-                  icon: 'add',
-                  tooltip: 'Add Subscription',
-                  position: 'toolbar',
-                  isFreeAction: true,
-                  onClick: () => {
-                    navigate(`/app/add-subscriptions/${'new'}`, {
-                      state: {
-                        subscribeObj: {
-                          digest: '',
-                          author: '',
-                          tag: ''
-                        }
-                      }
-                    }, { replace: true });
-                  }
-                }
-              ]}
+              }
+              renderInput={(params) => (
+                <TextField {...params} variant="filled" label="Authors" placeholder="Subscribed" />
+              )}
+            />
+
+            <br />
+            <h3>Subcribed Tags</h3>
+            <Autocomplete
+              id="tags-outlined"
+              options={top100Films}
+              getOptionLabel={(option) => option.title}
+              defaultValue={[top100Films[1]]}
+              filterSelectedOptions
+              multiple
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => {
+                  return <ChipWithPopper {...getTagProps({ index })} label={option.title} />;
+                })
+              }
+              renderInput={(params) => <TextField {...params} variant="filled" label="Tags" placeholder="Subscribed" />}
             />
           </MuiThemeProvider>
         </Box>
@@ -280,5 +182,71 @@ const Subs = () => {
     </Page>
   );
 };
+
+function ChipWithPopper(props) {
+  const classes = useStyles();
+
+  const handleDelete = () => {
+    console.info('You clicked the delete icon.');
+  };
+
+  const handleClick = () => {
+    console.info('You clicked the Chip.');
+  };
+
+  const top100Films = [
+    { title: 'Mr A', year: 1994 },
+    { title: 'Mr B', year: 1972 },
+    { title: 'Mrs C', year: 1974 }
+  ];
+
+  return (
+    <PopupState variant="popover" popupId="demo-popup-popover">
+      {(popupState) => (
+        <div style={{ display: 'inline-block' }}>
+          <Chip
+            size="small"
+            avatar={<Avatar>M</Avatar>}
+            label="Author Name"
+            onClick={handleClick}
+            onDelete={handleDelete}
+            {...bindTrigger(popupState)}
+            {...props}
+          />
+          <Popover
+            {...bindPopover(popupState)}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'center'
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'center'
+            }}
+          >
+            <Box p={2} className={classes.tags_popper}>
+              <Autocomplete
+                multiple
+                id="size-small-standard-multi"
+                size="small"
+                options={top100Films}
+                getOptionLabel={(option) => option.title}
+                defaultValue={[top100Films[0]]}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    label="Excludes From Author"
+                    placeholder="Tags or Synonyms"
+                  />
+                )}
+              />
+            </Box>
+          </Popover>
+        </div>
+      )}
+    </PopupState>
+  );
+}
 
 export default Subs;

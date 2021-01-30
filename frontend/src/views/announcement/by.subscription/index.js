@@ -9,8 +9,6 @@ import { getAllAnnouncements } from 'src/services/announcementService';
 import moment from 'moment';
 import { toast } from 'react-toastify';
 import { Label, Explicit } from '@material-ui/icons';
-import PopupState, { bindTrigger, bindPopover } from 'material-ui-popup-state';
-import Autocomplete from '@material-ui/lab/Autocomplete';
 import CreateForm from '../form.crud';
 import { StageContext } from '../context';
 /**
@@ -153,7 +151,7 @@ function Subcriptions() {
       try {
         const { status, data } = await getAllAnnouncements();
         if (status === 200) {
-          setAnnouncements(data);
+          setAnnouncements(data.data);
           setLoader(false);
         }
       } catch (ex) {
@@ -177,9 +175,8 @@ function Subcriptions() {
       // { title: 'Message', field: 'message' },
       {
         title: 'Author',
-        field: 'author.firstname',
-        editable: 'never',
-        render: (o) => `${o.author.firstname} ${o.author.lastname}`
+        field: 'author.fullname',
+        editable: 'never'
       },
       {
         title: 'Post Date',
@@ -260,7 +257,7 @@ function Subcriptions() {
                         {rowData.resources.map((item, index) => (
                           <div key={index}>
                             <span>{index + 1}</span>
-                            <span className="col">{item.name}</span>
+                            <span className="col">{item.slug}</span>
                             <span className="col">{item.url}</span>
                           </div>
                         ))}
@@ -275,159 +272,6 @@ function Subcriptions() {
       </Box>
     );
   }, [loader, announcements]);
-}
-
-function PoppeChip(props) {
-  const classes = useStyles();
-
-  const handleDelete = () => {
-    console.info('You clicked the delete icon.');
-  };
-
-  const handleClick = () => {
-    console.info('You clicked the Chip.');
-  };
-
-  const top100Films = [
-    { title: 'Mr A', year: 1994 },
-    { title: 'Mr B', year: 1972 },
-    { title: 'Mrs C', year: 1974 }
-  ];
-
-  function ChipType({ type, state }) {
-    if (type === 'author') {
-      return (
-        <Chip
-          size="small"
-          avatar={<Avatar>M</Avatar>}
-          label="Author Name"
-          onClick={handleClick}
-          onDelete={handleDelete}
-          {...bindTrigger(state)}
-          {...props}
-        />
-      );
-    }
-  }
-
-  return (
-    <PopupState variant="popover" popupId="demo-popup-popover">
-      {(popupState) => (
-        <div style={{ display: 'inline-block' }}>
-          <ChipType type="author" state={popupState} />
-          <Popover
-            {...bindPopover(popupState)}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'center'
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'center'
-            }}
-          >
-            <Box p={2} className={classes.tags_popper}>
-              <Autocomplete
-                multiple
-                id="size-small-standard-multi"
-                size="small"
-                options={top100Films}
-                getOptionLabel={(option) => option.title}
-                defaultValue={[top100Films[0]]}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant="outlined"
-                    label="Excludes From Author"
-                    placeholder="Tags or Synonyms"
-                  />
-                )}
-              />
-            </Box>
-          </Popover>
-        </div>
-      )}
-    </PopupState>
-  );
-}
-
-function PoppeChip2() {
-  const handleDelete = () => {
-    console.info('You clicked the delete icon.');
-  };
-
-  const top100Films = [
-    { title: 'Mr A', year: 1994 },
-    { title: 'Mr B', year: 1972 },
-    { title: 'Mrs C', year: 1974 }
-  ];
-
-  const classes = useStyles();
-
-  function ChipType({ type, state }) {
-    if (type === 'author') {
-      return (
-        <Chip
-          size="small"
-          label="Vehicle"
-          color="primary"
-          onDelete={handleDelete}
-          icon={<Label />}
-          {...bindTrigger(state)}
-          style={{ position: 'relative' }}
-        />
-      );
-    }
-  }
-
-  return (
-    <PopupState variant="popover" popupId="demo-popup-popover">
-      {(popupState) => (
-        <div style={{ display: 'inline-block' }}>
-          {/* <ChipType type="author" state={popupState} /> */}
-          <Chip
-            size="small"
-            label="Vehicle"
-            color="primary"
-            onDelete={handleDelete}
-            icon={<Label />}
-            {...bindTrigger(popupState)}
-            style={{ position: 'relative' }}
-          />
-          <Popover
-            {...bindPopover(popupState)}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'center'
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'center'
-            }}
-          >
-            <Box p={2} className={classes.tags_popper}>
-              <Autocomplete
-                multiple
-                id="size-small-standard-multi"
-                size="small"
-                options={top100Films}
-                getOptionLabel={(option) => option.title}
-                defaultValue={[top100Films[0]]}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant="outlined"
-                    label="Excludes From Author"
-                    placeholder="Tags or Synonyms"
-                  />
-                )}
-              />
-            </Box>
-          </Popover>
-        </div>
-      )}
-    </PopupState>
-  );
 }
 
 const AnnouncementListView = () => {
@@ -446,27 +290,7 @@ const AnnouncementListView = () => {
       <Page className={classes.root} title="Announcement">
         <Container maxWidth={false}>
           <AddAnnouncement show={stage == STAGE.CREATE} />
-          <Autocomplete
-            id="tags-outlined"
-            options={top100Films}
-            getOptionLabel={(option) => option.title}
-            defaultValue={[top100Films[1]]}
-            filterSelectedOptions
-            renderTags={(value, getTagProps) => {
-              return value.map((option, index) => {
-                return (
-                  <div>
-                    <Chip {...getTagProps({ index })} />
-                  </div>
-                );
-                // <Chip variant="outlined" label={option} {...getTagProps({ index })} />
-              });
-            }}
-            renderInput={(params) => <TextField {...params} variant="filled" label="filter" placeholder="Favorites" />}
-          />
-          <div className={classes.tags}>
-            <PoppeChip />
-          </div>
+
           <Subcriptions />
         </Container>
       </Page>
