@@ -4,6 +4,8 @@
  * Read the documentation (https://strapi.io/documentation/developer-docs/latest/concepts/controllers.html#core-controllers)
  * to customize this controller
  */
+const { parseMultipartData, sanitizeEntity } = require("strapi-utils");
+
 const { createTags, createResources } = strapi.config.functions["common"];
 
 module.exports = {
