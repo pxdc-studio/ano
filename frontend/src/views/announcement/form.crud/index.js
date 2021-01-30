@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Box,
   Container,
@@ -38,6 +38,7 @@ import AddIcon from '@material-ui/icons/Add';
 // import AsyncSelect from 'react-select/async';
 import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
 import CheckCircle from '@material-ui/icons/CheckCircle';
+import { StageContext } from '../context';
 
 /**
  * path: /app/add-announcements/new
@@ -218,6 +219,22 @@ export function Loading({ show }) {
 export function Success({ show }) {
   const classes = useStyles();
   const navigate = useNavigate();
+
+  // const [stage, setStage] = useContext(StageContext);
+
+  useEffect(() => {
+    let timeout;
+
+    if (show) {
+      timeout = setTimeout(() => {
+        // setStage(1);
+      }, 3000);
+    }
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [show]);
 
   function evtClose() {
     navigate(`/announcements`, { replace: true });

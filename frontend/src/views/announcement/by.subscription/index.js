@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Box, Container, makeStyles, Chip, Avatar, Popover, TextField, Modal, Backdrop, Fade } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
@@ -12,6 +12,7 @@ import { Label, Explicit } from '@material-ui/icons';
 import PopupState, { bindTrigger, bindPopover } from 'material-ui-popup-state';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import CreateForm from '../form.crud';
+import { StageContext } from '../context';
 /**
  * path: /app/announcements
  *      description: announcements CRUD
@@ -102,54 +103,16 @@ const STAGE = {
   READY: 1
 };
 
-const AnnouncementListView = () => {
-  const classes = useStyles();
-
-  const top100Films = [
-    { title: 'The Shawshank Redemption', year: 1994 },
-    { title: 'The Godfather', year: 1972 },
-    { title: 'The Godfather: Part II', year: 1974 }
-  ];
-
-  const [stage, setStage] = useState(STAGE.READY);
-
-  return (
-    <Page className={classes.root} title="Announcement">
-      <Container maxWidth={false}>
-        <AddAnnouncement show={stage == STAGE.CREATE} />
-        <Autocomplete
-          id="tags-outlined"
-          options={top100Films}
-          getOptionLabel={(option) => option.title}
-          defaultValue={[top100Films[1]]}
-          filterSelectedOptions
-          renderTags={(value, getTagProps) => {
-            return value.map((option, index) => {
-              return (
-                <div>
-                  <Chip {...getTagProps({ index })} />
-                </div>
-              );
-              // <Chip variant="outlined" label={option} {...getTagProps({ index })} />
-            });
-          }}
-          renderInput={(params) => <TextField {...params} variant="filled" label="filter" placeholder="Favorites" />}
-        />
-        <div className={classes.tags}>
-          <PoppeChip />
-        </div>
-        <Subcriptions />
-      </Container>
-    </Page>
-  );
-};
-
 function AddAnnouncement({ show }) {
+  const [stage, setStage] = useContext(StageContext);
+
   const classes = useStyles();
   // const navigate = useNavigate();
 
   function evtClose() {
     // navigate(`/announcements`, { replace: true });
+
+    setStage(STAGE.READY);
   }
 
   return !show ? null : (
@@ -176,6 +139,8 @@ function AddAnnouncement({ show }) {
 
 // eslint-disable-next-line no-unused-vars
 function Subcriptions() {
+  const [stage, setStage] = useContext(StageContext);
+
   const [loader, setLoader] = useState(true);
   const [announcements, setAnnouncements] = useState();
   const [selectedRow, setSelectedRow] = useState();
@@ -202,7 +167,9 @@ function Subcriptions() {
 
   return useMemo(() => {
     function addNewAnnouncement() {
-      navigate(`/announcements/add`, { replace: true });
+      // navigate(`/announcements/add`, { replace: true });
+
+      setStage(STAGE.CREATE);
     }
 
     const COLUMNS = [
@@ -462,5 +429,49 @@ function PoppeChip2() {
     </PopupState>
   );
 }
+
+const AnnouncementListView = () => {
+  const classes = useStyles();
+
+  const top100Films = [
+    { title: 'The Shawshank Redemption', year: 1994 },
+    { title: 'The Godfather', year: 1972 },
+    { title: 'The Godfather: Part II', year: 1974 }
+  ];
+
+  const [stage, setStage] = useState(STAGE.READY);
+
+  return (
+    <StageContext.Provider value={[stage, setStage]}>
+      <Page className={classes.root} title="Announcement">
+        <Container maxWidth={false}>
+          <AddAnnouncement show={stage == STAGE.CREATE} />
+          <Autocomplete
+            id="tags-outlined"
+            options={top100Films}
+            getOptionLabel={(option) => option.title}
+            defaultValue={[top100Films[1]]}
+            filterSelectedOptions
+            renderTags={(value, getTagProps) => {
+              return value.map((option, index) => {
+                return (
+                  <div>
+                    <Chip {...getTagProps({ index })} />
+                  </div>
+                );
+                // <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+              });
+            }}
+            renderInput={(params) => <TextField {...params} variant="filled" label="filter" placeholder="Favorites" />}
+          />
+          <div className={classes.tags}>
+            <PoppeChip />
+          </div>
+          <Subcriptions />
+        </Container>
+      </Page>
+    </StageContext.Provider>
+  );
+};
 
 export default AnnouncementListView;

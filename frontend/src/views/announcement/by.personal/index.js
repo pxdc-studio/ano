@@ -9,6 +9,8 @@ import Page from 'src/components/Page';
 import { deleteAnnouncement, getAllAnnouncementsByUser } from 'src/services/announcementService';
 import moment from 'moment';
 import { toast } from 'react-toastify';
+import { STAGE } from 'src/views/tags/data';
+import { StageContext } from '../context';
 
 /**
  * path: /app/announcements
@@ -57,6 +59,7 @@ const AnnouncementListView = ({ auth }) => {
   const navigate = useNavigate();
   const classes = useStyles();
   const theme = useTheme();
+  const [stage, setStage] = useState(STAGE.RESET);
   const [privateAnnouncements, setPrivateAnnouncements] = useState();
   const [loader, setLoader] = useState(true);
   // eslint-disable-next-line no-unused-vars
@@ -91,153 +94,155 @@ const AnnouncementListView = ({ auth }) => {
   };
 
   return (
-    <Page className={classes.root} title="Announcement">
-      <Container maxWidth={false}>
-        <Box mt={3}>
-          <MuiThemeProvider theme={themeTable}>
-            <MaterialTable
-              title="My Announcement"
-              isLoading={loader}
-              columns={[
-                // { title: 'ID', field: 'id', editable: 'never' },
-                // {
-                //   title: 'Author',
-                //   field: 'author.firstname',
-                //   editable: 'never',
-                //   render: (o) => `${o.author.firstname} ${o.author.lastname}`
-                // },
-                { title: 'Title', field: 'title' },
-                { title: 'Message', field: 'message' },
-                {
-                  title: 'Status',
-                  render: () => (
-                    <>
-                      <ButtonGroup size="small" aria-label="small outlined button group">
-                        <Button>Active</Button>
-                        <Button>Archived</Button>
-                      </ButtonGroup>
-                    </>
-                  )
-                },
-                {
-                  title: 'Post Date',
-                  field: 'postdate',
-                  render: (rowData) => moment(rowData.postdate).format('MMMM Do YYYY'),
-                  editable: 'never'
-                }
-                // {
-                //   title: 'Date Created',
-                //   field: 'created_at',
-                //   render: (rowData) => moment(rowData.created_at).format('MMMM Do YYYY'),
-                //   editable: 'never'
+    <StageContext.Provider value={[stage, setStage]}>
+      <Page className={classes.root} title="Announcement">
+        <Container maxWidth={false}>
+          <Box mt={3}>
+            <MuiThemeProvider theme={themeTable}>
+              <MaterialTable
+                title="My Announcement"
+                isLoading={loader}
+                columns={[
+                  // { title: 'ID', field: 'id', editable: 'never' },
+                  // {
+                  //   title: 'Author',
+                  //   field: 'author.firstname',
+                  //   editable: 'never',
+                  //   render: (o) => `${o.author.firstname} ${o.author.lastname}`
+                  // },
+                  { title: 'Title', field: 'title' },
+                  { title: 'Message', field: 'message' },
+                  {
+                    title: 'Status',
+                    render: () => (
+                      <>
+                        <ButtonGroup size="small" aria-label="small outlined button group">
+                          <Button>Active</Button>
+                          <Button>Archived</Button>
+                        </ButtonGroup>
+                      </>
+                    )
+                  },
+                  {
+                    title: 'Post Date',
+                    field: 'postdate',
+                    render: (rowData) => moment(rowData.postdate).format('MMMM Do YYYY'),
+                    editable: 'never'
+                  }
+                  // {
+                  //   title: 'Date Created',
+                  //   field: 'created_at',
+                  //   render: (rowData) => moment(rowData.created_at).format('MMMM Do YYYY'),
+                  //   editable: 'never'
 
-                // },
-                // {
-                //   title: 'Date Updated',
-                //   field: 'updated_at',
-                //   render: (rowData) => moment(rowData.updated_at).format('MMMM Do YYYY'),
-                //   editable: 'never'
-                // },
-              ]}
-              data={privateAnnouncements}
-              detailPanel={(rowData) => {
-                return rowData.tags.map((tag) => {
-                  return (
-                    <>
-                      <Grid container direction="row" justify="center" alignItems="center">
-                        <Grid item>
-                          <Box m={2} style={{ width: '100%' }}>
-                            <Chip label={tag.name} variant="outlined" size="small" color="primary" />
-                          </Box>
+                  // },
+                  // {
+                  //   title: 'Date Updated',
+                  //   field: 'updated_at',
+                  //   render: (rowData) => moment(rowData.updated_at).format('MMMM Do YYYY'),
+                  //   editable: 'never'
+                  // },
+                ]}
+                data={privateAnnouncements}
+                detailPanel={(rowData) => {
+                  return rowData.tags.map((tag) => {
+                    return (
+                      <>
+                        <Grid container direction="row" justify="center" alignItems="center">
+                          <Grid item>
+                            <Box m={2} style={{ width: '100%' }}>
+                              <Chip label={tag.name} variant="outlined" size="small" color="primary" />
+                            </Box>
+                          </Grid>
                         </Grid>
-                      </Grid>
-                    </>
-                  );
-                });
-              }}
-              // editable={{
-              //   onRowDelete: async ({ id }) => {
-              //     await handleDeleteAnnouncement(id);
-              //   }
-              // }}
-              // eslint-disable-next-line
-              onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
-              options={{
-                actionsColumnIndex: -1,
-                search: false,
-                filtering: true,
-                paging: false,
-                headerStyle: {
-                  backgroundColor: theme.palette.primary.main,
-                  color: '#FFF',
-                  '&:hover': {
-                    color: '#FFF'
-                  }
-                },
-                rowStyle: (rowData) => ({
-                  fontFamily: 'Roboto',
-                  backgroundColor:
-                    selectedRow === rowData.tableData.id
-                      ? theme.palette.background.dark
-                      : theme.palette.background.default,
-                  color: theme.palette.text.primary
-                })
-              }}
-              actions={[
-                {
-                  // custom action for update in new tab
-                  icon: 'create',
-                  tooltip: 'Update Announcement',
-                  onClick: (event, rowData) => {
-                    const { id, title, message, postdate, status, tags, resources } = rowData;
-                    navigate(
-                      `/app/announcements/update/${id}`,
-                      {
-                        state: {
-                          announObj: {
-                            title,
-                            message,
-                            postdate,
-                            status,
-                            tags,
-                            resources
-                          }
-                        }
-                      },
-                      { replace: true }
+                      </>
                     );
-                  }
-                },
-                {
-                  // overrides in-built add action in material table
-                  icon: 'add',
-                  tooltip: 'Add Announcement',
-                  position: 'toolbar',
-                  isFreeAction: true,
-                  onClick: () => {
-                    // Routing to Announcement Form on path: /app/add-announcements/new
-                    navigate(
-                      `/announcements/add`,
-                      {
-                        state: {
-                          announObj: {
-                            title: '',
-                            message: '',
-                            postdate: '2021-01-01',
-                            status: ''
+                  });
+                }}
+                // editable={{
+                //   onRowDelete: async ({ id }) => {
+                //     await handleDeleteAnnouncement(id);
+                //   }
+                // }}
+                // eslint-disable-next-line
+                onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
+                options={{
+                  actionsColumnIndex: -1,
+                  search: false,
+                  filtering: true,
+                  paging: false,
+                  headerStyle: {
+                    backgroundColor: theme.palette.primary.main,
+                    color: '#FFF',
+                    '&:hover': {
+                      color: '#FFF'
+                    }
+                  },
+                  rowStyle: (rowData) => ({
+                    fontFamily: 'Roboto',
+                    backgroundColor:
+                      selectedRow === rowData.tableData.id
+                        ? theme.palette.background.dark
+                        : theme.palette.background.default,
+                    color: theme.palette.text.primary
+                  })
+                }}
+                actions={[
+                  {
+                    // custom action for update in new tab
+                    icon: 'create',
+                    tooltip: 'Update Announcement',
+                    onClick: (event, rowData) => {
+                      const { id, title, message, postdate, status, tags, resources } = rowData;
+                      navigate(
+                        `/app/announcements/update/${id}`,
+                        {
+                          state: {
+                            announObj: {
+                              title,
+                              message,
+                              postdate,
+                              status,
+                              tags,
+                              resources
+                            }
                           }
-                        }
-                      },
-                      { replace: true }
-                    );
+                        },
+                        { replace: true }
+                      );
+                    }
+                  },
+                  {
+                    // overrides in-built add action in material table
+                    icon: 'add',
+                    tooltip: 'Add Announcement',
+                    position: 'toolbar',
+                    isFreeAction: true,
+                    onClick: () => {
+                      // Routing to Announcement Form on path: /app/add-announcements/new
+                      navigate(
+                        `/announcements/add`,
+                        {
+                          state: {
+                            announObj: {
+                              title: '',
+                              message: '',
+                              postdate: '2021-01-01',
+                              status: ''
+                            }
+                          }
+                        },
+                        { replace: true }
+                      );
+                    }
                   }
-                }
-              ]}
-            />
-          </MuiThemeProvider>
-        </Box>
-      </Container>
-    </Page>
+                ]}
+              />
+            </MuiThemeProvider>
+          </Box>
+        </Container>
+      </Page>
+    </StageContext.Provider>
   );
 };
 
