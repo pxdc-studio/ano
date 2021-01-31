@@ -1,13 +1,17 @@
 /* eslint-disable */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Box, Chip, Container, makeStyles } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Page from 'src/components/Page';
-import { getAllSynonyms, deleteSynonym } from 'src/services/synonymsService';
+import { getAllSynonyms, deleteSynonym, postSynonym, putSynonyms } from 'src/services/synonymsService';
+
+import { Resources as TagsAutoComplete } from 'src/views/announcement/form.crud';
+
+import { getTagsAutocomplete } from 'src/services/tagsServices';
 
 /**
  * path: /app/synonyms
@@ -55,36 +59,50 @@ const Synonyms = () => {
   const navigate = useNavigate();
   const classes = useStyles();
   const theme = useTheme();
-  const [synonyms, setSynonyms] = useState();
   const [loader, setLoader] = useState(true);
   // eslint-disable-next-line no-unused-vars
   const [selectedRow, setSelectedRow] = useState(null);
+  const tagRef = useRef();
 
-  // Synonyms fetch request function define
-  const fetchAllSynonyms = async () => {
+  async function fetchAllResources(query) {
     try {
-      const { status, data } = await getAllSynonyms();
-      if (status === 200) {
-        setSynonyms(data);
+      let { status, data } = await getAllSynonyms({
+        pageSize: query.pageSize,
+        page: query.page
+      });
+
+      if (status == 200) {
         setLoader(false);
+
+        return data;
       }
     } catch (ex) {
       toast.error(ex.response.data.message);
-      setSynonyms([]);
       setLoader(false);
+    }
+  }
+
+  // Resources remove function
+  const handleDeleteResource = async ({ id }) => {
+    const { status } = await deleteSynonym(id);
+    if (status === 200) {
+      return true;
+    }
+    return false;
+  };
+
+  const handleUpdateResource = async (newData, oldData) => {
+    const { status } = await putSynonyms(newData);
+    if (status === 200) {
+      return newData;
     }
   };
 
-  useEffect(() => {
-    // Synonyms fetch request function call
-    fetchAllSynonyms();
-  }, []);
-
-  // Synonym remove function
-  const handleDeleteSynonym = async (id) => {
-    const { status } = await deleteSynonym(id);
-    if (status === 200) {
-      fetchAllSynonyms();
+  const handleAddResource = async (newData, oldData) => {
+    const { status, data } = await postSynonym({ synonyms: [newData] });
+    if (status === 200 && data.length > 0) {
+      newData.id = data[0];
+      return newData;
     }
   };
 
@@ -94,33 +112,45 @@ const Synonyms = () => {
         <Box mt={3}>
           <MuiThemeProvider theme={themeTable}>
             <MaterialTable
-              title="Synonyms "
+              title="Synonyms"
               isLoading={loader}
               columns={[
-                { title: 'Name', field: 'slug', render: (dataRow) => dataRow.slug.split('-').join(' ') },
+                {
+                  title: 'Synonym',
+                  field: 'slug',
+                  render: (dataRow) => <Chip label={dataRow.slug.split('-').join(' ')} />,
+                  validate: (rowData) => rowData.slug != null && rowData.slug.length > 0
+                },
                 {
                   title: 'Tags',
                   field: 'tags',
-                  render: (dataRow) => {
-                    return dataRow.tags.map((tag) => (
-                      <Chip key={tag.id} label={tag.slug.split('-').join(' ')} color="secondary" />
-                    ));
-                  }
+                  // validate: (rowData) => rowData.tags != null && rowData.tags.length > 0,
+                  render: (dataRow) => dataRow.tags.map((tag) => <Chip label={tag} />),
+                  editComponent: (props) => (
+                    <TagsAutoComplete
+                      name="Tags"
+                      service={getTagsAutocomplete}
+                      ref={tagRef}
+                      onChange={(e) => props.onChange(tagRef.current.value)}
+                    />
+                  )
                 }
               ]}
-              data={synonyms}
+              data={fetchAllResources}
               editable={{
-                onRowDelete: async ({ id }) => {
-                  await handleDeleteSynonym(id);
-                }
+                onRowAdd: handleAddResource,
+                onRowUpdate: handleUpdateResource,
+                onRowDelete: handleDeleteResource
               }}
               // eslint-disable-next-line
               onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
               options={{
                 actionsColumnIndex: -1,
                 search: false,
-                filtering: true,
-                paging: false,
+                filtering: false,
+                paging: true,
+                pageSize: 5,
+                pageSizeOptions: [5, 10, 20],
                 headerStyle: {
                   backgroundColor: theme.palette.primary.main,
                   color: '#FFF',
@@ -137,53 +167,6 @@ const Synonyms = () => {
                   color: theme.palette.text.primary
                 })
               }}
-              actions={[
-                {
-                  // custom action for update in new tab
-                  icon: 'create',
-                  tooltip: 'Update Tags',
-                  onClick: (event, rowData) => {
-                    const { id, name, slug, tag: tagObj } = rowData;
-                    const { id: tag } = tagObj;
-                    navigate(
-                      `/app/add-synonyms/${id}`,
-                      {
-                        state: {
-                          synonymObj: {
-                            name,
-                            slug,
-                            tag
-                          }
-                        }
-                      },
-                      { replace: true }
-                    );
-                  }
-                },
-                {
-                  // overrides in-built add action in material table
-                  icon: 'add',
-                  tooltip: 'Add Synonym',
-                  position: 'toolbar',
-                  isFreeAction: true,
-                  onClick: () => {
-                    // Routing to Synonym Form on path: /app/add-synonyms/new
-                    navigate(
-                      `/app/add-synonyms/${'new'}`,
-                      {
-                        state: {
-                          synonymObj: {
-                            name: '',
-                            slug: '',
-                            tag: ''
-                          }
-                        }
-                      },
-                      { replace: true }
-                    );
-                  }
-                }
-              ]}
             />
           </MuiThemeProvider>
         </Box>

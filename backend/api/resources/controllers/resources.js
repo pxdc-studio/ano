@@ -8,6 +8,8 @@ const { parseMultipartData, sanitizeEntity } = require("strapi-utils");
 
 const { createTags, createResources } = strapi.config.functions["common"];
 
+const slugify = require("slugify");
+
 module.exports = {
   async autocomplete(ctx) {
     let { slug } = ctx.params;
@@ -36,7 +38,6 @@ module.exports = {
     const authorId = user ? user.id : -1; // none reachable user id
 
     const { pageSize = 20, page = 1 } = ctx.query;
-
     let raw = await strapi
       .query("resources")
       .model.query((q) => {
@@ -46,13 +47,19 @@ module.exports = {
       .fetchPage({
         pageSize,
         page,
+        limit: pageSize,
+        offset: page * pageSize,
       });
 
     const result = raw.map((item) =>
       sanitizeEntity(item, { model: strapi.models.resources })
     );
 
-    return result;
+    return {
+      data: result,
+      page: parseInt(page),
+      totalCount: raw.pagination.rowCount,
+    };
   },
   async create(ctx) {
     const user = ctx.state.user;
@@ -61,9 +68,8 @@ module.exports = {
     const { resources: input_resources } = ctx.request.body;
 
     try {
-      await createResources(input_resources, authorId);
-
-      return { status: 200 };
+      let data = await createResources(input_resources, authorId);
+      return { status: 200, data: data };
     } catch (e) {
       return { status: 400 };
     }
@@ -93,7 +99,6 @@ module.exports = {
 
       return { status: 200 };
     } catch (e) {
-      console.log(e);
       return { status: 400 };
     }
   },
@@ -102,7 +107,7 @@ module.exports = {
     const authorId = user ? user.id : -1; // none reachable user id
 
     const { id: resource_id } = ctx.params;
-    let { url } = ctx.request.body;
+    let { url, slug } = ctx.request.body;
 
     try {
       await strapi
@@ -113,6 +118,11 @@ module.exports = {
         })
         .save(
           {
+            slug: slugify(slug, {
+              replacement: "-",
+              lower: true,
+              strict: true,
+            }),
             url: encodeURIComponent(url),
           },
           { patch: true }

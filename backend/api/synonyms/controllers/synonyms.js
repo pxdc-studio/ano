@@ -26,13 +26,19 @@ module.exports = {
       .fetchPage({
         pageSize,
         page,
+        limit: pageSize,
+        offset: page * pageSize,
       });
 
     const result = raw.map((item) =>
       sanitizeEntity(item, { model: strapi.models.synonyms })
     );
 
-    return result;
+    return {
+      data: result,
+      page: parseInt(page),
+      totalCount: raw.pagination.rowCount,
+    };
   },
   async create(ctx) {
     const user = ctx.state.user;
@@ -41,9 +47,9 @@ module.exports = {
     const { synonyms: input_synonyms } = ctx.request.body; // [{ slug: "some-slug", tags: ["tag", "tag"] }]
 
     try {
-      await createSynonyms(input_synonyms, authorId);
+      let data = await createSynonyms(input_synonyms, authorId);
 
-      return { status: 200 };
+      return { status: 200, data: data };
     } catch (e) {
       return { status: 400 };
     }

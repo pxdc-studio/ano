@@ -9,13 +9,9 @@ import Page from 'src/components/Page';
 import { deleteAnnouncement, getAllAnnouncementsByUser } from 'src/services/announcementService';
 import moment from 'moment';
 import { toast } from 'react-toastify';
-import { STAGE } from 'src/views/tags/data';
-import { StageContext } from '../context';
+import { ModalAddAnnouncement } from '../form.crud';
 
-/**
- * path: /app/announcements
- *      description: announcements CRUD
- */
+import { StageContext } from '../context';
 
 // Styles for root component
 const useStyles = makeStyles((theme) => ({
@@ -67,15 +63,19 @@ const themeTable = createMuiTheme({
   }
 });
 
+const STAGE = {
+  CREATE: 0,
+  READY: 1
+};
+
 const AnnouncementListView = ({ auth }) => {
-  // const dynamicLookupObject = { 0: 'active', 1: 'archive' }; // object for status values
   const navigate = useNavigate();
   const classes = useStyles();
   const theme = useTheme();
-  const [stage, setStage] = useState(STAGE.RESET);
+  const [stage, setStage] = useState(STAGE.READY);
   const [privateAnnouncements, setPrivateAnnouncements] = useState();
   const [loader, setLoader] = useState(true);
-  // eslint-disable-next-line no-unused-vars
+
   const [selectedRow, setSelectedRow] = useState(null);
   // Announcements fetch request function define
 
@@ -110,21 +110,14 @@ const AnnouncementListView = ({ auth }) => {
     <StageContext.Provider value={[stage, setStage]}>
       <Page className={classes.root} title="Announcement">
         <Container maxWidth={false}>
+          <ModalAddAnnouncement show={stage == STAGE.CREATE} />
           <Box mt={3}>
             <MuiThemeProvider theme={themeTable}>
               <MaterialTable
                 title="My Announcement"
                 isLoading={loader}
                 columns={[
-                  // { title: 'ID', field: 'id', editable: 'never' },
-                  // {
-                  //   title: 'Author',
-                  //   field: 'author.firstname',
-                  //   editable: 'never',
-                  //   render: (o) => `${o.author.firstname} ${o.author.lastname}`
-                  // },
                   { title: 'Title', field: 'title' },
-                  // { title: 'Message', field: 'message' },
                   {
                     title: 'Status',
                     render: (rowData) => (
@@ -148,19 +141,6 @@ const AnnouncementListView = ({ auth }) => {
                     render: (rowData) => moment(rowData.postdate).format('MMMM Do YYYY'),
                     editable: 'never'
                   }
-                  // {
-                  //   title: 'Date Created',
-                  //   field: 'created_at',
-                  //   render: (rowData) => moment(rowData.created_at).format('MMMM Do YYYY'),
-                  //   editable: 'never'
-
-                  // },
-                  // {
-                  //   title: 'Date Updated',
-                  //   field: 'updated_at',
-                  //   render: (rowData) => moment(rowData.updated_at).format('MMMM Do YYYY'),
-                  //   editable: 'never'
-                  // },
                 ]}
                 data={privateAnnouncements}
                 detailPanel={[
@@ -185,12 +165,6 @@ const AnnouncementListView = ({ auth }) => {
                     }
                   }
                 ]}
-                // editable={{
-                //   onRowDelete: async ({ id }) => {
-                //     await handleDeleteAnnouncement(id);
-                //   }
-                // }}
-                // eslint-disable-next-line
                 onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
                 options={{
                   actionsColumnIndex: -1,
@@ -244,23 +218,7 @@ const AnnouncementListView = ({ auth }) => {
                     tooltip: 'Add Announcement',
                     position: 'toolbar',
                     isFreeAction: true,
-                    onClick: () => {
-                      // Routing to Announcement Form on path: /app/add-announcements/new
-                      navigate(
-                        `/announcements/add`,
-                        {
-                          state: {
-                            announObj: {
-                              title: '',
-                              message: '',
-                              postdate: '2021-01-01',
-                              status: ''
-                            }
-                          }
-                        },
-                        { replace: true }
-                      );
-                    }
+                    onClick: () => setStage(STAGE.CREATE)
                   }
                 ]}
               />

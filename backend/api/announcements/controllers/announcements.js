@@ -15,7 +15,9 @@ module.exports = {
     try {
       let user = ctx.state.user;
 
-      let fromUser = 0;
+      let { pageSize = 20, page = 1 } = ctx.query;
+
+      let fromUser = user ? user.id : -1;
 
       let resSCHEMA = {
         data: [],
@@ -25,7 +27,9 @@ module.exports = {
         pageCount: 0,
       };
 
-      let sub = await strapi.query("subscriptions").findOne({ "user.id": 1 });
+      let sub = await strapi
+        .query("subscriptions")
+        .findOne({ "user.id": fromUser });
 
       if (!sub) {
         return resSCHEMA;
@@ -90,9 +94,9 @@ module.exports = {
           q.orderBy("postdate", "desc");
         })
         .fetchPage({
-          pageSize: 20,
-          page: 1,
-          debug: true,
+          pageSize,
+          page,
+          // debug: true,
         });
 
       resSCHEMA = {

@@ -9,7 +9,7 @@ import { getAllAnnouncements } from 'src/services/announcementService';
 import moment from 'moment';
 import { toast } from 'react-toastify';
 import { Label, Explicit } from '@material-ui/icons';
-import CreateForm from '../form.crud';
+import { ModalAddAnnouncement } from '../form.crud';
 import { StageContext } from '../context';
 /**
  * path: /app/announcements
@@ -101,42 +101,7 @@ const STAGE = {
   READY: 1
 };
 
-function AddAnnouncement({ show }) {
-  const [stage, setStage] = useContext(StageContext);
-
-  const classes = useStyles();
-  // const navigate = useNavigate();
-
-  function evtClose() {
-    // navigate(`/announcements`, { replace: true });
-
-    setStage(STAGE.READY);
-  }
-
-  return !show ? null : (
-    <Modal
-      aria-labelledby="transition-modal-title"
-      aria-describedby="transition-modal-description"
-      className={classes.modal}
-      open={show}
-      onClose={evtClose}
-      closeAfterTransition
-      BackdropComponent={Backdrop}
-      BackdropProps={{
-        timeout: 500
-      }}
-    >
-      <Fade in={show}>
-        <div className={classes.paper}>
-          <CreateForm />
-        </div>
-      </Fade>
-    </Modal>
-  );
-}
-
-// eslint-disable-next-line no-unused-vars
-function Subcriptions() {
+function AnnouncementView() {
   const [stage, setStage] = useContext(StageContext);
 
   const [loader, setLoader] = useState(true);
@@ -145,11 +110,13 @@ function Subcriptions() {
   const navigate = useNavigate();
   const theme = useTheme();
   const classes = useStyles();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     async function fetchAnnouncements() {
       try {
-        const { status, data } = await getAllAnnouncements();
+        const { status, data } = await getAllAnnouncements({ pageSize, page });
         if (status === 200) {
           setAnnouncements(data.data);
           setLoader(false);
@@ -161,7 +128,7 @@ function Subcriptions() {
       }
     }
     fetchAnnouncements();
-  }, []);
+  }, [pageSize, page]);
 
   return useMemo(() => {
     function addNewAnnouncement() {
@@ -206,7 +173,7 @@ function Subcriptions() {
       search: false,
       filtering: false,
       paging: true,
-      pageSize: 10,
+      pageSize: pageSize,
       pageSizeOptions: [5, 10, 20, 50, 100],
       headerStyle: {
         backgroundColor: theme.palette.primary.main,
@@ -245,6 +212,11 @@ function Subcriptions() {
             columns={COLUMNS}
             options={OPTIONS}
             actions={ACTIONS}
+            onChangePage={(e) => {}}
+            onChangeRowsPerPage={(e) => {
+              setPage(1);
+              setPageSize(e);
+            }}
             detailPanel={[
               {
                 icon: 'description',
@@ -277,21 +249,14 @@ function Subcriptions() {
 const AnnouncementListView = () => {
   const classes = useStyles();
 
-  const top100Films = [
-    { title: 'The Shawshank Redemption', year: 1994 },
-    { title: 'The Godfather', year: 1972 },
-    { title: 'The Godfather: Part II', year: 1974 }
-  ];
-
   const [stage, setStage] = useState(STAGE.READY);
 
   return (
     <StageContext.Provider value={[stage, setStage]}>
       <Page className={classes.root} title="Announcement">
-        <Container maxWidth={false}>
-          <AddAnnouncement show={stage == STAGE.CREATE} />
-
-          <Subcriptions />
+        <Container maxWidth={true}>
+          <ModalAddAnnouncement show={stage == STAGE.CREATE} />
+          <AnnouncementView />
         </Container>
       </Page>
     </StageContext.Provider>

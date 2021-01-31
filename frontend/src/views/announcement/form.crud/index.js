@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useMemo, forwardRef, useRef, useImperativeHandle } from 'react';
 import {
   Box,
   Container,
@@ -30,20 +30,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Page from 'src/components/Page';
 // import TagsModal from 'src/components/tagsModal';
 import { postAnnouncement, putAnnouncement } from 'src/services/announcementService';
-import { getTagsByName } from 'src/services/tagsServices';
-// import { getAllResources, getSingleResource, deleteResource } from 'src/services/resourcesService';
-import { getCurrentUser } from 'src/services/authService';
-// import ResourcesModal from 'src/components/resourcesModal';
+
+import { getTagsAutocomplete } from 'src/services/tagsServices';
+import { getResourceAutocomplete } from 'src/services/resourcesService';
+
 import AddIcon from '@material-ui/icons/Add';
-// import AsyncSelect from 'react-select/async';
 import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
 import CheckCircle from '@material-ui/icons/CheckCircle';
-import { StageContext } from '../context';
 
-/**
- * path: /app/add-announcements/new
- *      description: adds new announcement
- */
+import { StageContext } from '../context';
 
 const TITLE_LIMIT = 80;
 const MESSAGE_LIMIT = 280;
@@ -76,40 +71,16 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const STAGE = {
-  READY: 0,
-  SUCCESS: 1,
-  LOADING: 2
-};
-
 const AnnouncementListView = () => {
   const classes = useStyles();
-  const navigate = useNavigate();
-  const { id } = useParams(); // get params ID v.i.a hook
+  // const navigate = useNavigate();
   const [stage, setStage] = useState(STAGE.READY);
-
-  async function getAsyncTags(input) {
-    const { status, data } = getTagsByName(input);
-    console.log(data, status);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([{ value: 'abc', label: 'abc' }]);
-      }, 1000);
-    });
-  }
+  const resourceRef = useRef();
+  const tagRef = useRef();
 
   // Save and Update Announcement
   const _handleSubmit = async (values) => {
-    return new Promise((r) => {
-      setStage(STAGE.LOADING);
-      setTimeout(() => {
-        setStage(STAGE.SUCCESS);
-        r();
-      }, 10000);
-    });
-    // let a = await postAnnouncement(values);
-    // console.log(a);
-    // setStage(STAGE.SUCCESS);
+    setStage(STAGE.LOADING);
   };
 
   function Form({ errors, handleBlur, handleChange, handleSubmit, isSubmitting }) {
@@ -150,8 +121,9 @@ const AnnouncementListView = () => {
             onChange={handleChange}
             variant="outlined"
           />
-          <Resources />
-          <Tags />
+          <Resources name="Resource" service={getResourceAutocomplete} ref={resourceRef} />
+          <br />
+          <Resources name="Tags" service={getTagsAutocomplete} ref={tagRef} />
 
           <Box my={4}>
             <Button
@@ -174,9 +146,6 @@ const AnnouncementListView = () => {
   const validation = Yup.object().shape({
     title: Yup.string().max(80).required('Title is required'),
     message: Yup.string().max(280).required('Message is required')
-    // status: Yup.number().required('Status is required'),
-    // postdate: Yup.date().required('Post Date is required'),
-    // tags: Yup.array().required('Tags are required')
   });
 
   return (
@@ -194,7 +163,7 @@ const AnnouncementListView = () => {
   );
 };
 
-export function Loading({ show }) {
+function Loading({ show }) {
   const classes = useStyles();
 
   return !show ? null : (
@@ -216,7 +185,7 @@ export function Loading({ show }) {
   );
 }
 
-export function Success({ show }) {
+function Success({ show }) {
   const classes = useStyles();
   const navigate = useNavigate();
 
@@ -267,138 +236,204 @@ export function Success({ show }) {
   );
 }
 
-function Tags() {
-  const [options] = React.useState([{ title: 'abc' }]);
+let STAGE = {
+  READY: 0,
+  SUCCESS: 1,
+  LOADING: 2,
+  LOADED: 3
+};
 
-  return (
-    <Autocomplete
-      multiple
-      id="tags-outlined"
-      options={options}
-      getOptionLabel={(option) => option.title}
-      filterSelectedOptions
-      renderInput={(params) => (
-        <TextField {...params} variant="outlined" label="Tags & Asynonyms" placeholder="Favorites" />
-      )}
-    />
-  );
-}
+let filter = createFilterOptions();
 
-const filter = createFilterOptions();
+export const Resources = forwardRef(function ({ name, service = () => {} }, parentRef) {
+  const [value, setValue] = useState([]);
+  const [options, setOptions] = useState([]);
+  const [stage, setSTAGE] = useState(STAGE.READY);
+  let [input, setInput] = useState(null);
+  let [open, setOpen] = useState(false);
+  const [dialogValue, setDialogValue] = React.useState({
+    title: '',
+    url: ''
+  });
 
-function Resources() {
-  const [value, setValue] = useState(null);
-  const [open, toggleOpen] = useState(false);
+  useImperativeHandle(parentRef, () => ({
+    value
+  }));
 
-  const top100Films = [
-    { title: 'The Shawshank Redemption', year: 1994 },
-    { title: 'The Godfather', year: 1972 }
-  ];
+  function loadData(input) {
+    if (input != null && input.length > 0) {
+      setSTAGE(STAGE.LOADING);
+      setInput(input);
+    }
 
-  const handleClose = () => {
-    setDialogValue({ title: '', year: '' });
-    toggleOpen(false);
-  };
+    if (input && input.trim() == '') {
+      setSTAGE(STAGE.READY);
+    }
+  }
 
-  const [dialogValue, setDialogValue] = useState({ title: '', year: '' });
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setValue({
-      title: dialogValue.title,
-      year: parseInt(dialogValue.year, 10)
-    });
-
-    handleClose();
-  };
-
-  return (
-    <>
-      <Autocomplete
-        value={value}
-        onChange={(event, newValue) => {
-          if (typeof newValue === 'string') {
-            // timeout to avoid instant validation of the dialog's form.
-            setTimeout(() => {
-              toggleOpen(true);
-              setDialogValue({ title: newValue, year: '' });
-            });
-          } else if (newValue && newValue.inputValue) {
-            toggleOpen(true);
-            setDialogValue({
-              title: newValue.inputValue,
-              year: ''
-            });
+  useEffect(() => {
+    if (input != null && input.length > 0) {
+      try {
+        (async () => {
+          let { data } = await service(input);
+          if (data && data.length > 0) {
+            const formated_data_array = data.map((tag) => ({ title: tag.slug.split('-').join(' '), url: tag.url }));
+            setOptions(formated_data_array);
+            setSTAGE(STAGE.LOADED);
           } else {
-            setValue(newValue);
+            setOptions([]);
+            setSTAGE(STAGE.LOADED);
           }
-        }}
-        filterOptions={(options, params) => {
-          const filtered = filter(options, params);
+        })();
+      } catch (e) {
+        setSTAGE(STAGE.READY);
+      }
+    }
+  }, [input]);
 
-          if (params.inputValue !== '') {
-            filtered.push({
-              inputValue: params.inputValue,
-              title: `Add "${params.inputValue}"`
-            });
-          }
+  return useMemo(() => {
+    function Input(params) {
+      return (
+        <TextField
+          {...params}
+          onChange={(e) => loadData(e.target.value)}
+          label={name}
+          variant="outlined"
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <React.Fragment>
+                {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
+                {params.InputProps.endAdornment}
+              </React.Fragment>
+            )
+          }}
+        />
+      );
+    }
 
-          return filtered;
-        }}
-        id="free-solo-dialog-demo"
-        options={top100Films}
-        getOptionLabel={(option) => {
-          // e.g value selected with enter, right from the input
-          if (typeof option === 'string') {
-            return option;
-          }
-          if (option.inputValue) {
-            return option.inputValue;
-          }
-          return option.title;
-        }}
-        selectOnFocus
-        clearOnBlur
-        handleHomeEndKeys
-        renderOption={(option) => option.title}
-        style={{ width: 300 }}
-        freeSolo
-        renderInput={(params) => <TextField {...params} label="Free solo dialog" variant="outlined" />}
-      />
-      <Dialog open={open} onClose={handleClose} aria-labelledby="form-dialog-title">
-        <form onSubmit={handleSubmit}>
-          <DialogTitle id="form-dialog-title">Add a new film</DialogTitle>
-          <DialogContent>
-            <DialogContentText>Did you miss any film in our list? Please, add it!</DialogContentText>
-            <TextField
-              autoFocus
-              margin="dense"
-              id="name"
-              value={dialogValue.title}
-              onChange={(event) => setDialogValue({ ...dialogValue, title: event.target.value })}
-              label="title"
-              type="text"
-            />
-            <TextField
-              margin="dense"
-              id="name"
-              value={dialogValue.year}
-              onChange={(event) => setDialogValue({ ...dialogValue, year: event.target.value })}
-              label="year"
-              type="number"
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose} color="primary">
-              Cancel
-            </Button>
-            <Button type="submit" color="primary">
-              Add
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-    </>
+    function evtTagChange(event, newValue) {
+      if (newValue.length < 1) return;
+      const newItem = newValue.find((item) => item.inputValue != null);
+      if (newItem) {
+        setOpen(true);
+        setDialogValue({
+          title: newItem.inputValue,
+          url: ''
+        });
+      } else {
+        setValue(newValue);
+      }
+    }
+
+    function evtOptionFilter(options, params) {
+      const filtered = filter(options, params);
+
+      if (params.inputValue !== '') {
+        filtered.push({
+          inputValue: params.inputValue,
+          title: `${params.inputValue} (*)`
+        });
+      }
+      return filtered;
+    }
+
+    function evtNewResource(e) {
+      let exist = value.find((item) => item.url == dialogValue.url);
+      if (exist) {
+        setOpen(false);
+        return;
+      }
+
+      setValue([...value, dialogValue]);
+      setOpen(false);
+    }
+
+    return (
+      <>
+        <Autocomplete
+          value={value}
+          multiple
+          options={options}
+          getOptionLabel={(option) => option.title}
+          filterSelectedOptions
+          fullWidth
+          loading={stage == STAGE.LOADING ? true : false}
+          noOptionsText="> Type to load"
+          freeSolo
+          onChange={evtTagChange}
+          renderInput={Input}
+          filterOptions={evtOptionFilter}
+          getOptionSelected={(v, n) => {
+            if (v.inputValue != null) return false;
+            return n.url == v.url ? true : false;
+          }}
+        />
+        <Dialog open={open} aria-labelledby="form-dialog-title">
+          <form onSubmit={evtNewResource}>
+            <DialogTitle>Add a new resource</DialogTitle>
+            <DialogContent>
+              <DialogContentText>Did you miss the {name} in the list? Please, add it!</DialogContentText>
+              <TextField
+                margin="dense"
+                value={dialogValue.title}
+                onChange={(event) => setDialogValue({ ...dialogValue, title: event.target.value })}
+                label="title"
+                type="text"
+              />
+              <TextField
+                autoFocus
+                margin="dense"
+                value={dialogValue.url}
+                onChange={(event) => setDialogValue({ ...dialogValue, url: event.target.value })}
+                label="url"
+                type="text"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button color="primary">Cancel</Button>
+              <Button type="submit" color="primary">
+                Add
+              </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
+      </>
+    );
+  }, [options, stage, value, open, dialogValue]);
+});
+
+export function ModalAddAnnouncement({ show }) {
+  const [stage, setStage] = useContext(StageContext);
+
+  const classes = useStyles();
+  // const navigate = useNavigate();
+
+  function evtClose() {
+    // navigate(`/announcements`, { replace: true });
+
+    setStage(STAGE.READY);
+  }
+
+  return !show ? null : (
+    <Modal
+      aria-labelledby="transition-modal-title"
+      aria-describedby="transition-modal-description"
+      className={classes.modal}
+      open={show}
+      onClose={evtClose}
+      closeAfterTransition
+      BackdropComponent={Backdrop}
+      BackdropProps={{
+        timeout: 500
+      }}
+    >
+      <Fade in={show}>
+        <div className={classes.paper}>
+          <AnnouncementListView />
+        </div>
+      </Fade>
+    </Modal>
   );
 }
 

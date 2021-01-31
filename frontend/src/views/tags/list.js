@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Box, Container, TextField, makeStyles, Chip } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
@@ -63,158 +63,111 @@ const themeTable = createMuiTheme({
 
 const Tags = () => {
   const navigate = useNavigate();
+  const [loader, setLoader] = useState(false);
 
   const classes = useStyles();
+  const [selectedRow, setSelectedRow] = useState(null);
 
   const theme = useTheme();
 
-  const [state, setState] = useContext(Context);
-
-  const [tags, setTags] = useState();
-  const [loader, setLoader] = useState(true);
-  // eslint-disable-next-line no-unused-vars
-  const [selectedRow, setSelectedRow] = useState(null);
-
-  // Tags fetch request function define
-  const fetchAllTags = async () => {
+  async function fetchAllResources(query) {
     try {
-      const { status, data } = await getAllTags();
+      let { status, data } = await getAllTags({
+        pageSize: query.pageSize,
+        page: query.page
+      });
 
-      if (status === 200) {
-        setTags(data);
+      if (status == 200) {
         setLoader(false);
+
+        return data;
       }
     } catch (ex) {
       toast.error(ex.response.data.message);
-      setTags([]);
       setLoader(false);
     }
-  };
+  }
 
-  // const createTag = () => {
-  //   // setLoader(true);
-
-  //   postTag(stage.payload)
-  //     .then((res) => {
-  //       console.log(res.data);
-  //     })
-  //     .catch((e) => {
-  //       console.log(e);
-  //     })
-  //     .finally(() => {
-  //       setLoader(false);
-
-  //       setStage({ ...stage, value: STAGE.RESET, payload: null });
-  //     });
-
-  //   // try {
-  //   //   const { status, data } = await getAllTags();
-
-  //   //   if (status === 200) {
-  //   //     setTags(data);
-  //   //     setLoader(false);
-  //   //   }
-  //   // } catch (ex) {
-  //   //   toast.error(ex.response.data.message);
-  //   //   setTags([]);
-  //   //   setLoader(false);
-  //   // }
-  // };
-
-  useEffect(() => {
-    // Tags fetch request function call
-    fetchAllTags();
-  }, []);
-
-  // Tag remove function
-  const handleDeleteTag = async (id) => {
+  // Resources remove function
+  const handleDeleteResource = async ({ id }) => {
     const { status } = await deleteTag(id);
     if (status === 200) {
-      fetchAllTags();
+      return true;
+    }
+    return false;
+  };
+
+  const handleUpdateResource = async (newData, oldData) => {
+    const { status } = await putTag(newData);
+    if (status === 200) {
+      return newData;
     }
   };
 
-  return (
-    <Page className={classes.root} title="Tags">
-      <Container maxWidth={false}>
-        <Box mt={3}>
-          <MuiThemeProvider theme={themeTable}>
-            <MaterialTable
-              title="Tags"
-              isLoading={loader}
-              columns={[
-                // { title: 'ID', field: 'id', editable: 'never' },
-                {
-                  title: 'Name',
-                  field: 'name',
-                  render: (row) => (
-                    <Chip
-                      size="small"
-                      // avatar={<Avatar>M</Avatar>}
-                      label={row.slug.split('-').join(' ')}
-                    />
-                  )
-                },
-                { title: 'Slug', field: 'slug' }
-                // {
-                //   title: 'Author',
-                //   field: 'author',
-                //   render: (row) => `${row.author?.firstname} ${row.author?.lastname}`
-                // }
-                // { title: 'Announcement', field: 'announcement_id.title' },
-              ]}
-              data={tags}
-              editable={{
-                onRowDelete: async ({ id }) => {
-                  await handleDeleteTag(id);
-                }
-              }}
-              onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
-              options={{
-                actionsColumnIndex: -1,
-                search: false,
-                filtering: true,
-                paging: false,
-                headerStyle: {
-                  backgroundColor: theme.palette.primary.main,
-                  color: '#FFF',
-                  '&:hover': {
-                    color: '#FFF'
+  const handleAddResource = async (newData, oldData) => {
+    const { status, data } = await postTag({ tags: [newData] });
+    if (status === 200 && data.length > 0) {
+      newData.id = data[0];
+      return newData;
+    }
+  };
+
+  return useMemo(() => {
+    return (
+      <Page className={classes.root} title="Tags">
+        <Container maxWidth={false}>
+          <Box mt={3}>
+            <MuiThemeProvider theme={themeTable}>
+              <MaterialTable
+                title="Tags"
+                isLoading={loader}
+                columns={[
+                  {
+                    title: 'Tag',
+                    field: 'slug',
+                    render: (dataRow) => <Chip label={dataRow.slug.split('-').join(' ')} />,
+                    validate: (rowData) => rowData.slug != null && rowData.slug.length > 0
                   }
-                },
-                rowStyle: (rowData) => ({
-                  fontFamily: 'Roboto',
-                  backgroundColor:
-                    selectedRow === rowData.tableData.id
-                      ? theme.palette.background.dark
-                      : theme.palette.background.default,
-                  color: theme.palette.text.primary
-                })
-              }}
-              actions={[
-                {
-                  // custom action for update in new tab
-                  icon: 'create',
-                  tooltip: 'Update Tags',
-                  onClick: (event, rowData) => {
-                    // setState(update(state, { stage: { $set: STAGE.EDIT_TAG }, form: { $set: rowData } }));
-                  }
-                },
-                {
-                  // overrides in-built add action in material table
-                  icon: 'add',
-                  tooltip: 'Add Tag',
-                  position: 'toolbar',
-                  isFreeAction: true,
-                  onClick: () => setState(update(state, { stage: { $set: STAGE.ADD_TAG } }))
-                }
-              ]}
-            />
-          </MuiThemeProvider>
-        </Box>
-      </Container>
-    </Page>
-  );
+                  // { title: 'Url', field: 'url', validate: (rowData) => rowData.url != null && rowData.url.length > 0 }
+                ]}
+                data={fetchAllResources}
+                editable={{
+                  onRowAdd: handleAddResource,
+                  onRowUpdate: handleUpdateResource,
+                  onRowDelete: handleDeleteResource
+                }}
+                // eslint-disable-next-line
+                onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
+                options={{
+                  actionsColumnIndex: -1,
+                  search: false,
+                  filtering: false,
+                  paging: true,
+                  pageSize: 5,
+                  pageSizeOptions: [5, 10, 20],
+                  headerStyle: {
+                    backgroundColor: theme.palette.primary.main,
+                    color: '#FFF',
+                    '&:hover': {
+                      color: '#FFF'
+                    }
+                  },
+                  rowStyle: (rowData) => ({
+                    fontFamily: 'Roboto',
+                    backgroundColor:
+                      selectedRow === rowData.tableData.id
+                        ? theme.palette.background.dark
+                        : theme.palette.background.default,
+                    color: theme.palette.text.primary
+                  })
+                }}
+              />
+            </MuiThemeProvider>
+          </Box>
+        </Container>
+      </Page>
+    );
+  }, [loader]);
 };
 
 export default Tags;

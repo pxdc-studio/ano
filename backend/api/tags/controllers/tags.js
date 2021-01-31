@@ -51,13 +51,19 @@ module.exports = {
       .fetchPage({
         pageSize,
         page,
+        limit: pageSize,
+        offset: page * pageSize,
       });
 
     const result = raw.map((item) =>
       sanitizeEntity(item, { model: strapi.models.tags })
     );
 
-    return result;
+    return {
+      data: result,
+      page: parseInt(page),
+      totalCount: raw.pagination.rowCount,
+    };
   },
   async create(ctx) {
     const user = ctx.state.user;
@@ -66,9 +72,9 @@ module.exports = {
     const { tags: input_tags } = ctx.request.body;
 
     try {
-      await createTags(input_tags, authorId);
+      let data = await createTags(input_tags, authorId);
 
-      return { status: 200 };
+      return { status: 200, data: data };
     } catch (e) {
       return { status: 400 };
     }

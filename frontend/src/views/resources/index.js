@@ -1,11 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Container, makeStyles } from '@material-ui/core';
+/* eslint-disable */
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Container, makeStyles, Backdrop, Modal, TextField, Fade, Typography, Button } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Page from 'src/components/Page';
-import { getAllResources, deleteResource } from 'src/services/resourcesService';
+import { getAllResources, deleteResource, postResource, putResource } from 'src/services/resourcesService';
+import * as Yup from 'yup';
+import { Formik } from 'formik';
+import AddIcon from '@material-ui/icons/Add';
 
 /**
  * path: /app/resources
@@ -20,6 +25,24 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3),
     paddingRight: theme.spacing(20)
+  },
+  modal: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    '& > *': {
+      outline: 'none'
+    }
+  },
+  paper: {
+    backgroundColor: theme.palette.background.paper,
+    outline: 'none',
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(2),
+    borderRadius: '1em',
+    '& > p > *': {
+      verticalAlign: 'middle'
+    }
   }
 }));
 // MUI Theme Provider for using custom fonts
@@ -49,137 +72,213 @@ const themeTable = createMuiTheme({
   }
 });
 
-const Resources = () => {
-  const navigate = useNavigate();
+export function PopupModal({ show }) {
+  const classes = useStyles();
+
+  function evtClose() {}
+
+  function _handleSubmit() {}
+
+  function Form({ errors, handleBlur, handleChange, handleSubmit, isSubmitting }) {
+    return (
+      <>
+        <form onSubmit={handleSubmit}>
+          <Box mb={3}>
+            <Typography color="textPrimary" variant="h2">
+              New Resource
+            </Typography>
+          </Box>
+
+          <TextField
+            // eslint-disable-next-line no-unneeded-ternary
+            error={errors.title != null}
+            fullWidth
+            label="Title"
+            margin="normal"
+            name="title"
+            inputProps={{ maxLength: 80 }}
+            onBlur={handleBlur}
+            onChange={handleChange}
+            variant="outlined"
+            autoComplete={false}
+          />
+
+          <TextField
+            // eslint-disable-next-line no-unneeded-ternary
+            error={errors.message != null}
+            fullWidth
+            label="url"
+            margin="normal"
+            required
+            name="message"
+            inputProps={{ maxLength: 280 }}
+            multiline
+            rowsMax={6}
+            onBlur={handleBlur}
+            onChange={handleChange}
+            variant="outlined"
+            autoComplete={false}
+          />
+
+          <Box my={4}>
+            <Button
+              color="primary"
+              disabled={isSubmitting}
+              fullWidth
+              size="large"
+              type="submit"
+              variant="contained"
+              startIcon={<AddIcon />}
+            >
+              Create
+            </Button>
+          </Box>
+        </form>
+      </>
+    );
+  }
+
+  const validation = Yup.object().shape({
+    title: Yup.string().max(80).required('Title is required'),
+    url: Yup.string().required('url is required')
+  });
+
+  return !show ? null : (
+    <Modal
+      aria-labelledby="transition-modal-title"
+      aria-describedby="transition-modal-description"
+      className={classes.modal}
+      open={show}
+      onClose={evtClose}
+      closeAfterTransition
+      BackdropComponent={Backdrop}
+      BackdropProps={{
+        timeout: 500
+      }}
+    >
+      <Fade in={show}>
+        <div className={classes.paper}>
+          <Formik validationSchema={validation} onSubmit={_handleSubmit} initialValues={{}}>
+            {Form}
+          </Formik>
+        </div>
+      </Fade>
+    </Modal>
+  );
+}
+
+const STAGE = {
+  READY: 0,
+  CREATE: 1
+};
+
+export default () => {
   const classes = useStyles();
   const theme = useTheme();
-  const [resources, setResources] = useState();
   const [loader, setLoader] = useState(true);
-  // eslint-disable-next-line no-unused-vars
   const [selectedRow, setSelectedRow] = useState(null);
-  // Resources fetch request function define
-  const fetchAllResources = async () => {
+  const [stage, setSTAGE] = useState(STAGE.READY);
+
+  const ref = useRef();
+
+  async function fetchAllResources(query) {
     try {
-      const { status, data } = await getAllResources();
-      console.log(data);
-      if (status === 200) {
-        setResources(data);
+      let { status, data } = await getAllResources({
+        pageSize: query.pageSize,
+        page: query.page
+      });
+
+      if (status == 200) {
         setLoader(false);
+
+        return data;
       }
     } catch (ex) {
       toast.error(ex.response.data.message);
-      setResources([]);
       setLoader(false);
     }
-  };
-
-  useEffect(() => {
-    fetchAllResources();
-    // Resources fetch request function called
-  }, []);
+  }
 
   // Resources remove function
-  const handleDeleteResource = async (id) => {
+  const handleDeleteResource = async ({ id }) => {
     const { status } = await deleteResource(id);
     if (status === 200) {
-      fetchAllResources();
+      return true;
+    }
+    return false;
+  };
+
+  const handleUpdateResource = async (newData, oldData) => {
+    const { status } = await putResource(newData);
+    if (status === 200) {
+      return newData;
     }
   };
 
-  return (
-    <Page className={classes.root} title="Resources">
-      <Container maxWidth={false}>
-        <Box mt={3}>
-          <MuiThemeProvider theme={themeTable}>
-            <MaterialTable
-              title="Resources "
-              isLoading={loader}
-              columns={[
-                { title: 'Name', field: 'slug', render: (dataRow) => dataRow.slug.split('-').join(' ') },
-                { title: 'Url', field: 'url' }
-              ]}
-              data={resources}
-              editable={{
-                onRowDelete: async ({ id }) => {
-                  await handleDeleteResource(id);
-                }
-              }}
-              // eslint-disable-next-line
-              onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
-              options={{
-                actionsColumnIndex: -1,
-                search: false,
-                filtering: true,
-                paging: false,
-                headerStyle: {
-                  backgroundColor: theme.palette.primary.main,
-                  color: '#FFF',
-                  '&:hover': {
-                    color: '#FFF'
-                  }
-                },
-                rowStyle: (rowData) => ({
-                  fontFamily: 'Roboto',
-                  backgroundColor:
-                    selectedRow === rowData.tableData.id
-                      ? theme.palette.background.dark
-                      : theme.palette.background.default,
-                  color: theme.palette.text.primary
-                })
-              }}
-              actions={[
-                {
-                  // custom action for update in new tabaaa
-                  icon: 'create',
-                  tooltip: 'Update Announcement',
-                  onClick: (event, rowData) => {
-                    const { id, name, url, announcement_id: announObj } = rowData;
-                    const { id: announId } = announObj;
-                    navigate(
-                      `/app/add-resources/${id}`,
-                      {
-                        state: {
-                          resourceObj: {
-                            name,
-                            url,
-                            announId
-                          }
-                        }
-                      },
-                      { replace: true }
-                    );
-                  }
-                },
-                {
-                  // overrides in-built add action in material table
-                  icon: 'add',
-                  tooltip: 'Add Resources',
-                  position: 'toolbar',
-                  isFreeAction: true,
-                  onClick: () => {
-                    // Routing to Resources Form on /app/add-resources/new
-                    navigate(
-                      `/app/add-resources/${'new'}`,
-                      {
-                        state: {
-                          resourceObj: {
-                            name: '',
-                            url: '',
-                            announId: ''
-                          }
-                        }
-                      },
-                      { replace: true }
-                    );
-                  }
-                }
-              ]}
-            />
-          </MuiThemeProvider>
-        </Box>
-      </Container>
-    </Page>
-  );
-};
+  const handleAddResource = async (newData, oldData) => {
+    const { status, data } = await postResource({ resources: [newData] });
+    if (status === 200 && data.length > 0) {
+      newData.id = data[0];
+      return newData;
+    }
+  };
 
-export default Resources;
+  return useMemo(() => {
+    return (
+      <Page className={classes.root} title="Resources">
+        <Container maxWidth={false}>
+          {/* <PopupModal show={stage == STAGE.CREATE} /> */}
+          <Box mt={3}>
+            <MuiThemeProvider theme={themeTable}>
+              <MaterialTable
+                tableRef={ref}
+                title="Resources"
+                isLoading={loader}
+                columns={[
+                  {
+                    title: 'Name',
+                    field: 'slug',
+                    render: (dataRow) => dataRow.slug.split('-').join(' '),
+                    validate: (rowData) => rowData.slug != null && rowData.slug.length > 0
+                  },
+                  { title: 'Url', field: 'url', validate: (rowData) => rowData.url != null && rowData.url.length > 0 }
+                ]}
+                data={fetchAllResources}
+                editable={{
+                  onRowAdd: handleAddResource,
+                  onRowUpdate: handleUpdateResource,
+                  onRowDelete: handleDeleteResource
+                }}
+                // eslint-disable-next-line
+                onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
+                options={{
+                  actionsColumnIndex: -1,
+                  search: false,
+                  filtering: false,
+                  paging: true,
+                  pageSize: 5,
+                  pageSizeOptions: [5, 10, 20],
+                  headerStyle: {
+                    backgroundColor: theme.palette.primary.main,
+                    color: '#FFF',
+                    '&:hover': {
+                      color: '#FFF'
+                    }
+                  },
+                  rowStyle: (rowData) => ({
+                    fontFamily: 'Roboto',
+                    backgroundColor:
+                      selectedRow === rowData.tableData.id
+                        ? theme.palette.background.dark
+                        : theme.palette.background.default,
+                    color: theme.palette.text.primary
+                  })
+                }}
+              />
+            </MuiThemeProvider>
+          </Box>
+        </Container>
+      </Page>
+    );
+  }, [loader]);
+};

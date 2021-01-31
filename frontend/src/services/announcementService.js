@@ -9,8 +9,8 @@ const apiEndpoint = '/announcements';
  */
 
 // hits api/announcements/
-export function getAllAnnouncements() {
-  return http.get(`${apiEndpoint}`, {
+export function getAllAnnouncements({ pageSize = 20, page = 1 } = {}) {
+  return http.get(`${apiEndpoint}?pageSize=${pageSize}&page=${page}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
   });
 }
