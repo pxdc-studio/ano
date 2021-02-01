@@ -13,7 +13,8 @@ import {
   MenuItem,
   Chip,
   Avatar,
-  Popover
+  Popover,
+  Typography
 } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
@@ -24,6 +25,9 @@ import { getAllSubscriptions, deleteSubscription, getFilterData } from 'src/serv
 import { toast } from 'react-toastify';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import PopupState, { bindTrigger, bindPopover } from 'material-ui-popup-state';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+import AddIcon from '@material-ui/icons/Add';
 
 /**
  * path: /app/subscriptions
@@ -77,7 +81,7 @@ const Subs = () => {
   const navigate = useNavigate();
   const classes = useStyles();
   const theme = useTheme();
-  const [subscriptions, setSubscriptions] = useState();
+  const [subscriptions, setSubscriptions] = useState(null);
   const [loader, setLoader] = useState(true);
   // eslint-disable-next-line no-unused-vars
   const [selectedRow, setSelectedRow] = useState(null);
@@ -88,6 +92,7 @@ const Subs = () => {
       const { status, data } = await getAllSubscriptions();
       if (status === 200) {
         setSubscriptions(data);
+        console.log(data);
         setLoader(false);
       }
     } catch (ex) {
@@ -137,45 +142,86 @@ const Subs = () => {
     { title: 'Mrs C', year: 1974 }
   ];
 
+  function _handleSubmit() {}
+
+  const validation = Yup.object().shape({
+    title: Yup.string().max(80).required('Title is required'),
+    message: Yup.string().max(280).required('Message is required')
+  });
+
+  function Form({ errors, handleBlur, handleChange, handleSubmit, isSubmitting }) {
+    return (
+      <>
+        <form onSubmit={handleSubmit}>
+          <Box mb={3}>
+            <Typography color="textPrimary" variant="h2">
+              Subscription
+            </Typography>
+          </Box>
+          {/* <Autocomplete
+            id="tags-outlined"
+            options={top100Films}
+            getOptionLabel={(option) => option.title}
+            defaultValue={[top100Films[1]]}
+            filterSelectedOptions
+            multiple
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => {
+                return <ChipWithPopper {...getTagProps({ index })} label={option.title} />;
+              })
+            }
+            renderInput={(params) => (
+              <TextField {...params} variant="outlined" label="Subcribed Author" placeholder="Tags" />
+            )}
+          /> */}
+
+          <br />
+          <Autocomplete
+            options={subscriptions ? subscriptions.tags : []}
+            getOptionLabel={(option) => option.tag.slug}
+            value={subscriptions ? subscriptions.tags : []}
+            multiple
+            filterSelectedOptions
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => {
+                if (option.exclude_authors) {
+                  return (
+                    <ChipWithPopper {...getTagProps({ index })} label={option.tag.slug} data={option.exclude_authors} />
+                  );
+                }
+              })
+            }
+            renderInput={(params) => (
+              <TextField {...params} variant="outlined" label="Subcribed Tags" placeholder="Tags" />
+            )}
+          />
+
+          <Box my={4}>
+            <Button
+              color="primary"
+              disabled={isSubmitting}
+              fullWidth
+              size="large"
+              type="submit"
+              variant="contained"
+              startIcon={<AddIcon />}
+            >
+              Update
+            </Button>
+          </Box>
+        </form>
+      </>
+    );
+  }
+
   return (
     <Page className={classes.root} title="Tags">
       <Container maxWidth={false}>
         <Box mt={3}>
           <MuiThemeProvider theme={themeTable}>
-            <h3>Subcribed Authors</h3>
-            <Autocomplete
-              id="tags-outlined"
-              options={top100Films}
-              getOptionLabel={(option) => option.title}
-              defaultValue={[top100Films[1]]}
-              filterSelectedOptions
-              multiple
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => {
-                  return <ChipWithPopper {...getTagProps({ index })} label={option.title} />;
-                })
-              }
-              renderInput={(params) => (
-                <TextField {...params} variant="filled" label="Authors" placeholder="Subscribed" />
-              )}
-            />
-
-            <br />
-            <h3>Subcribed Tags</h3>
-            <Autocomplete
-              id="tags-outlined"
-              options={top100Films}
-              getOptionLabel={(option) => option.title}
-              defaultValue={[top100Films[1]]}
-              filterSelectedOptions
-              multiple
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => {
-                  return <ChipWithPopper {...getTagProps({ index })} label={option.title} />;
-                })
-              }
-              renderInput={(params) => <TextField {...params} variant="filled" label="Tags" placeholder="Subscribed" />}
-            />
+            <Formik validationSchema={validation} onSubmit={_handleSubmit} initialValues={{}}>
+              {Form}
+            </Formik>
           </MuiThemeProvider>
         </Box>
       </Container>
@@ -183,7 +229,7 @@ const Subs = () => {
   );
 };
 
-function ChipWithPopper(props) {
+function ChipWithPopper({ data, ...props }) {
   const classes = useStyles();
 
   const handleDelete = () => {
@@ -229,9 +275,9 @@ function ChipWithPopper(props) {
                 multiple
                 id="size-small-standard-multi"
                 size="small"
-                options={top100Films}
+                options={data}
                 getOptionLabel={(option) => option.title}
-                defaultValue={[top100Films[0]]}
+                value={data}
                 renderInput={(params) => (
                   <TextField
                     {...params}

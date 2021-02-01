@@ -2,6 +2,12 @@ import http from './httpService';
 
 const apiEndpoint = '/synonyms';
 
+export function getSynonymsAutocomplete(slug) {
+  return http.get(`${apiEndpoint}/find/${slug}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
+  });
+}
+
 export function getAllSynonyms({ pageSize = 5, page = 1 } = {}) {
   return http.get(`${apiEndpoint}/?pageSize=${pageSize}&page=${page}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }

@@ -14,9 +14,10 @@ export function getAllAnnouncements({ pageSize = 20, page = 1 } = {}) {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
   });
 }
+
 // hits api/announcements/me
-export function getAllAnnouncementsByUser() {
-  return http.get(`${apiEndpoint}/me`, {
+export function getAllAnnouncementsByUser({ pageSize = 5, page = 1 } = {}) {
+  return http.get(`${apiEndpoint}/me?pageSize=${pageSize}&page=${page}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
   });
 }

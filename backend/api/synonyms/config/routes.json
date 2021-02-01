@@ -2,6 +2,14 @@
   "routes": [
     {
       "method": "GET",
+      "path": "/synonyms/find/:slug",
+      "handler": "synonyms.autocomplete",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
       "path": "/synonyms",
       "handler": "synonyms.find",
       "config": {

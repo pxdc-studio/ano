@@ -14,7 +14,7 @@
       "name": "Apache 2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
     },
-    "x-generation-date": "02/01/2021 12:59:26 AM"
+    "x-generation-date": "02/01/2021 5:33:10 PM"
   },
   "x-strapi-config": {
     "path": "/documentation",
@@ -619,7 +619,7 @@
         "description": "",
         "responses": {
           "200": {
-            "description": "Retrieve resources document(s)",
+            "description": "response",
             "content": {
               "application/json": {
                 "schema": {
@@ -665,7 +665,7 @@
         },
         "summary": "",
         "tags": [
-          "Resources"
+          "Unclassified"
         ],
         "parameters": [
           {
@@ -1692,6 +1692,74 @@
         "parameters": [
           {
             "name": "id",
+            "in": "path",
+            "description": "",
+            "deprecated": false,
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/synonyms/find/{slug}": {
+      "get": {
+        "deprecated": false,
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Retrieve synonyms document(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "foo": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Synonyms"
+        ],
+        "parameters": [
+          {
+            "name": "slug",
             "in": "path",
             "description": "",
             "deprecated": false,
@@ -6249,6 +6317,9 @@
     },
     {
       "name": "Synonyms"
+    },
+    {
+      "name": "Unclassified"
     },
     {
       "name": "Tags"

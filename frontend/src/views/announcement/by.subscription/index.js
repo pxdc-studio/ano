@@ -107,10 +107,9 @@ function AnnouncementView() {
   const [loader, setLoader] = useState(true);
   const [announcements, setAnnouncements] = useState();
   const [selectedRow, setSelectedRow] = useState();
-  const navigate = useNavigate();
   const theme = useTheme();
   const classes = useStyles();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
@@ -131,15 +130,8 @@ function AnnouncementView() {
   }, [pageSize, page]);
 
   return useMemo(() => {
-    function addNewAnnouncement() {
-      // navigate(`/announcements/add`, { replace: true });
-
-      setStage(STAGE.CREATE);
-    }
-
     const COLUMNS = [
       { title: 'Title', field: 'title' },
-      // { title: 'Message', field: 'message' },
       {
         title: 'Author',
         field: 'author.fullname',
@@ -154,8 +146,9 @@ function AnnouncementView() {
       {
         title: 'Tags & Synonyms',
         render: (rowData) => {
-          return rowData.tags.map((item) => (
+          return rowData.tags.map((item, index) => (
             <Chip
+              key={index}
               size="small"
               label={item.slug.split('-').join(' ')}
               clickable
@@ -190,16 +183,6 @@ function AnnouncementView() {
       })
     };
 
-    const ACTIONS = [
-      {
-        icon: 'add',
-        tooltip: 'Add Announcement',
-        position: 'toolbar',
-        isFreeAction: true,
-        onClick: addNewAnnouncement
-      }
-    ];
-
     return (
       <Box mt={4}>
         <MuiThemeProvider theme={themeTable}>
@@ -211,7 +194,6 @@ function AnnouncementView() {
             onRowClick={(evt, _selectedRow) => setSelectedRow(_selectedRow.tableData.id)}
             columns={COLUMNS}
             options={OPTIONS}
-            actions={ACTIONS}
             onChangePage={(e) => {}}
             onChangeRowsPerPage={(e) => {
               setPage(1);
@@ -254,8 +236,7 @@ const AnnouncementListView = () => {
   return (
     <StageContext.Provider value={[stage, setStage]}>
       <Page className={classes.root} title="Announcement">
-        <Container maxWidth={true}>
-          <ModalAddAnnouncement show={stage == STAGE.CREATE} />
+        <Container maxWidth={false}>
           <AnnouncementView />
         </Container>
       </Page>

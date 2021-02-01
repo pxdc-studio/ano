@@ -9,7 +9,7 @@ import { toast } from 'react-toastify';
 import Page from 'src/components/Page';
 import { getAllSynonyms, deleteSynonym, postSynonym, putSynonyms } from 'src/services/synonymsService';
 
-import { Resources as TagsAutoComplete } from 'src/views/announcement/form.crud';
+import { Tags } from 'src/views/announcement/form.crud';
 
 import { getTagsAutocomplete } from 'src/services/tagsServices';
 
@@ -91,17 +91,25 @@ const Synonyms = () => {
     return false;
   };
 
-  const handleUpdateResource = async (newData, oldData) => {
-    const { status } = await putSynonyms(newData);
+  const handleUpdateResource = async (v, oldData) => {
+    const { status } = await putSynonyms({
+      id: v.id,
+      slug: v.slug,
+      tags: tagRef.current.value.map((r) => ({ slug: r.title }))
+    });
     if (status === 200) {
-      return newData;
+      return v;
     }
+    return false;
   };
 
   const handleAddResource = async (newData, oldData) => {
-    const { status, data } = await postSynonym({ synonyms: [newData] });
+    const { status, data } = await postSynonym({
+      slug: newData.slug,
+      tags: tagRef.current.value.map((r) => ({ slug: r.title }))
+    });
+
     if (status === 200 && data.length > 0) {
-      newData.id = data[0];
       return newData;
     }
   };
@@ -124,16 +132,11 @@ const Synonyms = () => {
                 {
                   title: 'Tags',
                   field: 'tags',
-                  // validate: (rowData) => rowData.tags != null && rowData.tags.length > 0,
-                  render: (dataRow) => dataRow.tags.map((tag) => <Chip label={tag} />),
-                  editComponent: (props) => (
-                    <TagsAutoComplete
-                      name="Tags"
-                      service={getTagsAutocomplete}
-                      ref={tagRef}
-                      onChange={(e) => props.onChange(tagRef.current.value)}
-                    />
-                  )
+                  render: (dataRow) => dataRow.tags.map((tag, index) => <Chip key={index} label={tag.slug} />),
+                  editComponent: ({ rowData }) => {
+                    let data = rowData.tags ? rowData.tags.map((r) => ({ title: r.slug.split('-').join(' ') })) : [];
+                    return <Tags name="Tags" service={getTagsAutocomplete} ref={tagRef} value={data} />;
+                  }
                 }
               ]}
               data={fetchAllResources}

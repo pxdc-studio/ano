@@ -8,23 +8,23 @@
 const { parseMultipartData, sanitizeEntity } = require("strapi-utils");
 const _ = require("lodash");
 
-let { createTags, createResources } = strapi.config.functions["common"];
+let { createTags, createResources, createSynonyms } = strapi.config.functions[
+  "common"
+];
 
 module.exports = {
   async find(ctx) {
     try {
       let user = ctx.state.user;
 
-      let { pageSize = 20, page = 1 } = ctx.query;
+      let { pageSize = 20, page = 0 } = ctx.query;
 
       let fromUser = user ? user.id : -1;
 
       let resSCHEMA = {
         data: [],
         page: 0,
-        pageSize: 0,
-        rowCount: 0,
-        pageCount: 0,
+        totalCount: 0,
       };
 
       let sub = await strapi
@@ -63,47 +63,50 @@ module.exports = {
 
           q.where("announcements.author", "!=", fromUser);
 
-          tags.forEach((node) => {
-            q.orWhere(function () {
-              let self = this.where("announcements__tags.tag_id", node.tag.id);
+          // tags.forEach((node) => {
+          //   q.orWhere(function () {
+          //     let self = this.where("announcements__tags.tag_id", node.tag.id);
 
-              if (node.exclude_authors && node.exclude_authors.length > 0) {
-                self.andWhere(
-                  "announcements.author",
-                  "NOT IN",
-                  node.exclude_authors.map((author) => author.id)
-                );
-              }
-            });
-          });
+          //     if (node.exclude_authors && node.exclude_authors.length > 0) {
+          //       self.andWhere(
+          //         "announcements.author",
+          //         "NOT IN",
+          //         node.exclude_authors.map((author) => author.id)
+          //       );
+          //     }
+          //   });
+          // });
 
-          sub.authors.forEach((node) => {
-            q.orWhere(function () {
-              let self = this.where("announcements.author", node.id);
+          // sub.authors.forEach((node) => {
+          //   q.orWhere(function () {
+          //     let self = this.where("announcements.author", node.id);
 
-              if (node.exclude_tags && node.exclude_tags.length > 0) {
-                self.andWhere(
-                  "tags.id",
-                  "NOT IN",
-                  node.exclude_tags.map((o) => o.id)
-                );
-              }
-            });
-          });
+          //     if (node.exclude_tags && node.exclude_tags.length > 0) {
+          //       self.andWhere(
+          //         "tags.id",
+          //         "NOT IN",
+          //         node.exclude_tags.map((o) => o.id)
+          //       );
+          //     }
+          //   });
+          // });
 
           q.orderBy("postdate", "desc");
         })
         .fetchPage({
           pageSize,
           page,
-          // debug: true,
+          limit: pageSize,
+          offset: (page - 1) * pageSize,
+          debug: true,
         });
 
       resSCHEMA = {
         data: raw.map((item) =>
           sanitizeEntity(item, { model: strapi.models.announcements })
         ),
-        ...raw.pagination,
+        limit: parseInt(pageSize),
+        offset: (page - 1) * pageSize,
       };
 
       return resSCHEMA;
@@ -127,13 +130,19 @@ module.exports = {
       .fetchPage({
         pageSize,
         page,
+        limit: pageSize,
+        offset: page * pageSize,
       });
 
     let result = raw.map((item) =>
       sanitizeEntity(item, { model: strapi.models.announcements })
     );
 
-    return result;
+    return {
+      data: result,
+      page: parseInt(page),
+      totalCount: raw.pagination.rowCount,
+    };
   },
   async create(ctx) {
     const user = ctx.state.user;
@@ -144,13 +153,14 @@ module.exports = {
       message,
       tags: input_tags,
       resources: input_resources,
-      synonyms,
+      synonyms: input_synonyms,
     } = ctx.request.body;
 
     try {
-      const [_tags, _resouces] = await Promise.all([
+      const [_tags, _resouces, _synonyms] = await Promise.all([
         createTags(input_tags, authorId),
         createResources(input_resources, authorId),
+        createSynonyms(input_synonyms, authorId),
       ]);
 
       await strapi.query("announcements").create({
@@ -158,9 +168,9 @@ module.exports = {
         message: message || "default",
         tags: _tags,
         resources: _resouces,
-        synonyms: synonyms,
+        synonyms: _synonyms,
         postdate: new Date(),
-        author: 1,
+        author: authorId,
       });
 
       return { status: 200 };
@@ -170,46 +180,46 @@ module.exports = {
   },
   async update(ctx) {
     try {
-      // let user = ctx.state.user;
-      // let authorId = 1;
-      // let { id } = ctx.params;
+      let user = ctx.state.user;
+      const authorId = user ? user.id : -1; // none reachable user id
+      let { id } = ctx.params;
 
-      // if (!id) {
-      //   return { status: 400 };
-      // }
+      if (!id) {
+        return { status: 400 };
+      }
+      let isYourPost = await strapi
+        .query("announcements")
+        .find({ author: authorId, id: id });
 
-      // let isYourPost = await strapi
-      //   .query("announcements")
-      //   .find({ author: authorId, id: id });
+      if (!isYourPost) {
+        return { status: 400 };
+      }
 
-      // if (!isYourPost) {
-      //   return { status: 400 };
-      // }
+      let {
+        title,
+        message,
+        tags: input_tags,
+        resources: input_resources,
+        synonyms: input_synonyms,
+      } = ctx.request.body;
 
-      // let {
-      //   title,
-      //   message,
-      //   tags: input_tags,
-      //   resources: input_resources,
-      //   synonyms,
-      // } = ctx.request.body;
+      let [_tags, _resouces, _synonyms] = await Promise.all([
+        createTags(input_tags, authorId),
+        createResources(input_resources, authorId),
+        createSynonyms(input_synonyms, authorId),
+      ]);
 
-      //   let [_tags, _resouces] = await Promise.all([
-      //     createTags(input_tags, authorId),
-      //     createResources(input_resources, authorId),
-      //   ]);
-
-      //   await strapi.query("announcements").update(
-      //     { id: id },
-      //     {
-      //       ...(title && { title }),
-      //       ...(message && { message }),
-      //       tags: _tags,
-      //       resources: _resouces,
-      //       synonyms: synonyms,
-      //       author: 1,
-      //     }
-      //   );
+      await strapi.query("announcements").update(
+        { id: id },
+        {
+          ...(title && { title }),
+          ...(message && { message }),
+          tags: _tags,
+          resources: _resouces,
+          synonyms: _synonyms,
+          author: authorId,
+        }
+      );
 
       return { status: 200 };
     } catch (e) {

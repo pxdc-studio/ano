@@ -33,15 +33,11 @@ import { postAnnouncement, putAnnouncement } from 'src/services/announcementServ
 
 import { getTagsAutocomplete } from 'src/services/tagsServices';
 import { getResourceAutocomplete } from 'src/services/resourcesService';
+import { getSynonymsAutocomplete } from 'src/services/synonymsService';
 
 import AddIcon from '@material-ui/icons/Add';
 import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
 import CheckCircle from '@material-ui/icons/CheckCircle';
-
-import { StageContext } from '../context';
-
-const TITLE_LIMIT = 80;
-const MESSAGE_LIMIT = 280;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -71,16 +67,35 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const AnnouncementListView = () => {
+let STAGE = {
+  READY: 0,
+  SUCCESS: 1,
+  LOADING: 2,
+  LOADED: 3
+};
+
+const AnnouncementListView = ({ onClose }) => {
   const classes = useStyles();
-  // const navigate = useNavigate();
   const [stage, setStage] = useState(STAGE.READY);
   const resourceRef = useRef();
   const tagRef = useRef();
+  const synonymRef = useRef();
 
   // Save and Update Announcement
   const _handleSubmit = async (values) => {
     setStage(STAGE.LOADING);
+
+    let { status } = await postAnnouncement({
+      title: values.title,
+      message: values.message,
+      tags: tagRef.current.value.map((r) => ({ slug: r.title })),
+      resources: resourceRef.current.value.map((r) => ({ slug: r.title, url: r.url })),
+      synonyms: synonymRef.current.value.map((r) => ({ slug: r.title }))
+    });
+
+    if (status === 200) {
+      setStage(STAGE.SUCCESS);
+    }
   };
 
   function Form({ errors, handleBlur, handleChange, handleSubmit, isSubmitting }) {
@@ -123,7 +138,9 @@ const AnnouncementListView = () => {
           />
           <Resources name="Resource" service={getResourceAutocomplete} ref={resourceRef} />
           <br />
-          <Resources name="Tags" service={getTagsAutocomplete} ref={tagRef} />
+          <Tags name="Tags" service={getTagsAutocomplete} ref={tagRef} />
+          <br />
+          <Synonyms name="Synonyms" service={getSynonymsAutocomplete} ref={synonymRef} />
 
           <Box my={4}>
             <Button
@@ -152,7 +169,7 @@ const AnnouncementListView = () => {
     <Page className={classes.root} title="Announcement">
       <Box display="flex" flexDirection="column" height="100%" justifyContent="center">
         <Container maxWidth="sm">
-          <Success show={stage == STAGE.SUCCESS} />
+          <Success show={stage == STAGE.SUCCESS} onClose={onClose} />
           <Loading show={stage == STAGE.LOADING} />
           <Formik validationSchema={validation} onSubmit={_handleSubmit} initialValues={{}}>
             {Form}
@@ -185,29 +202,8 @@ function Loading({ show }) {
   );
 }
 
-function Success({ show }) {
+function Success({ show, onClose }) {
   const classes = useStyles();
-  const navigate = useNavigate();
-
-  // const [stage, setStage] = useContext(StageContext);
-
-  useEffect(() => {
-    let timeout;
-
-    if (show) {
-      timeout = setTimeout(() => {
-        // setStage(1);
-      }, 3000);
-    }
-
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
-  }, [show]);
-
-  function evtClose() {
-    navigate(`/announcements`, { replace: true });
-  }
 
   return !show ? null : (
     <div>
@@ -216,7 +212,7 @@ function Success({ show }) {
         aria-describedby="transition-modal-description"
         className={classes.modal}
         open={show}
-        onClose={evtClose}
+        onClose={onClose}
         closeAfterTransition
         BackdropComponent={Backdrop}
         BackdropProps={{
@@ -236,22 +232,14 @@ function Success({ show }) {
   );
 }
 
-let STAGE = {
-  READY: 0,
-  SUCCESS: 1,
-  LOADING: 2,
-  LOADED: 3
-};
-
 let filter = createFilterOptions();
 
-export const Resources = forwardRef(function ({ name, service = () => {} }, parentRef) {
-  const [value, setValue] = useState([]);
+export const Resources = forwardRef(function ({ name, service = () => {}, value: _value = [] }, parentRef) {
+  const [value, setValue] = useState(_value);
   const [options, setOptions] = useState([]);
   const [stage, setSTAGE] = useState(STAGE.READY);
-  let [input, setInput] = useState(null);
-  let [open, setOpen] = useState(false);
-  const [dialogValue, setDialogValue] = React.useState({
+  const [open, setOpen] = useState(false);
+  const [dialogValue, setDialogValue] = useState({
     title: '',
     url: ''
   });
@@ -260,85 +248,71 @@ export const Resources = forwardRef(function ({ name, service = () => {} }, pare
     value
   }));
 
-  function loadData(input) {
-    if (input != null && input.length > 0) {
-      setSTAGE(STAGE.LOADING);
-      setInput(input);
+  async function autoComplete(input) {
+    if (input.trim().length == 0) {
+      setOptions([]);
+      return;
     }
-
-    if (input && input.trim() == '') {
-      setSTAGE(STAGE.READY);
+    setSTAGE(STAGE.LOADING);
+    let { data } = await service(input);
+    if (data && data.length > 0) {
+      const formated_data_array = data.map((tag) => ({ title: tag.slug.split('-').join(' '), url: tag.url }));
+      setOptions(formated_data_array);
     }
+    setSTAGE(STAGE.READY);
   }
-
-  useEffect(() => {
-    if (input != null && input.length > 0) {
-      try {
-        (async () => {
-          let { data } = await service(input);
-          if (data && data.length > 0) {
-            const formated_data_array = data.map((tag) => ({ title: tag.slug.split('-').join(' '), url: tag.url }));
-            setOptions(formated_data_array);
-            setSTAGE(STAGE.LOADED);
-          } else {
-            setOptions([]);
-            setSTAGE(STAGE.LOADED);
-          }
-        })();
-      } catch (e) {
-        setSTAGE(STAGE.READY);
-      }
-    }
-  }, [input]);
 
   return useMemo(() => {
     function Input(params) {
       return (
         <TextField
           {...params}
-          onChange={(e) => loadData(e.target.value)}
+          onChange={(e) => autoComplete(e.target.value)}
           label={name}
           variant="outlined"
           InputProps={{
             ...params.InputProps,
             endAdornment: (
-              <React.Fragment>
+              <>
                 {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
                 {params.InputProps.endAdornment}
-              </React.Fragment>
+              </>
             )
           }}
         />
       );
     }
 
-    function evtTagChange(event, newValue) {
-      if (newValue.length < 1) return;
-      const newItem = newValue.find((item) => item.inputValue != null);
+    function evtInputChange(event, values) {
+      const newItem = values.find((item) => item.inputValue != null);
+
       if (newItem) {
         setOpen(true);
         setDialogValue({
           title: newItem.inputValue,
           url: ''
         });
-      } else {
-        setValue(newValue);
+        return;
       }
+
+      setValue(values);
     }
 
-    function evtOptionFilter(options, params) {
+    function evtFilterChange(options, params) {
       const filtered = filter(options, params);
 
-      if (params.inputValue !== '') {
+      if (params.inputValue.trim() !== '') {
         filtered.push({
           inputValue: params.inputValue,
-          title: `${params.inputValue} (*)`
+          title: `${params.inputValue}*`
         });
       }
       return filtered;
     }
 
-    function evtNewResource(e) {
+    function evtAddNew(e) {
+      e.preventDefault();
+      e.stopPropagation();
       let exist = value.find((item) => item.url == dialogValue.url);
       if (exist) {
         setOpen(false);
@@ -361,19 +335,19 @@ export const Resources = forwardRef(function ({ name, service = () => {} }, pare
           loading={stage == STAGE.LOADING ? true : false}
           noOptionsText="> Type to load"
           freeSolo
-          onChange={evtTagChange}
+          onChange={evtInputChange}
           renderInput={Input}
-          filterOptions={evtOptionFilter}
+          filterOptions={evtFilterChange}
           getOptionSelected={(v, n) => {
             if (v.inputValue != null) return false;
             return n.url == v.url ? true : false;
           }}
         />
         <Dialog open={open} aria-labelledby="form-dialog-title">
-          <form onSubmit={evtNewResource}>
+          <form onSubmit={evtAddNew}>
             <DialogTitle>Add a new resource</DialogTitle>
             <DialogContent>
-              <DialogContentText>Did you miss the {name} in the list? Please, add it!</DialogContentText>
+              <DialogContentText>Did you miss the Resource in the list? Please, add it!</DialogContentText>
               <TextField
                 margin="dense"
                 value={dialogValue.title}
@@ -403,17 +377,172 @@ export const Resources = forwardRef(function ({ name, service = () => {} }, pare
   }, [options, stage, value, open, dialogValue]);
 });
 
-export function ModalAddAnnouncement({ show }) {
-  const [stage, setStage] = useContext(StageContext);
+export const Tags = forwardRef(function ({ name, service = () => {}, value: _value = [] }, parentRef) {
+  const [value, setValue] = useState(_value);
+  const [options, setOptions] = useState([]);
+  const [stage, setSTAGE] = useState(STAGE.READY);
 
-  const classes = useStyles();
-  // const navigate = useNavigate();
+  useImperativeHandle(parentRef, () => ({
+    value
+  }));
 
-  function evtClose() {
-    // navigate(`/announcements`, { replace: true });
-
-    setStage(STAGE.READY);
+  async function autoComplete(input) {
+    if (input.trim().length == 0) {
+      setOptions([]);
+      return;
+    }
+    setSTAGE(STAGE.LOADING);
+    let { data } = await service(input);
+    if (data && data.length > 0) {
+      const formated_data_array = data.map((tag) => ({ title: tag.slug.split('-').join(' ') }));
+      setOptions(formated_data_array);
+    }
+    setSTAGE(STAGE.READY);
   }
+
+  return useMemo(() => {
+    function Input(params) {
+      return (
+        <TextField
+          {...params}
+          onChange={(e) => autoComplete(e.target.value)}
+          label={name}
+          variant="outlined"
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <>
+                {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
+                {params.InputProps.endAdornment}
+              </>
+            )
+          }}
+        />
+      );
+    }
+
+    function evtInputChange(event, values) {
+      setValue(values);
+    }
+
+    function evtFilterChange(options, params) {
+      const filtered = filter(options, params);
+
+      if (params.inputValue.trim() !== '') {
+        filtered.push({
+          slug: params.inputValue,
+          title: `${params.inputValue}*`
+        });
+      }
+      return filtered;
+    }
+
+    return (
+      <>
+        <Autocomplete
+          value={value}
+          multiple
+          options={options}
+          getOptionLabel={(option) => option.title}
+          filterSelectedOptions
+          fullWidth
+          loading={stage == STAGE.LOADING ? true : false}
+          noOptionsText="> Type to load"
+          freeSolo
+          onChange={evtInputChange}
+          renderInput={Input}
+          filterOptions={evtFilterChange}
+          getOptionSelected={(v, n) => {
+            if (v.inputValue != null) return false;
+            return n.slug == v.slug ? true : false;
+          }}
+        />
+      </>
+    );
+  }, [options, stage, value]);
+});
+
+export const Synonyms = forwardRef(function ({ name, service = () => {}, value: _value = [] }, parentRef) {
+  const [value, setValue] = useState(_value);
+  const [options, setOptions] = useState([]);
+  const [stage, setSTAGE] = useState(STAGE.READY);
+
+  useImperativeHandle(parentRef, () => ({
+    value
+  }));
+
+  async function autoComplete(input) {
+    if (input.trim().length == 0) {
+      setOptions([]);
+      return;
+    }
+    setSTAGE(STAGE.LOADING);
+    let { data } = await service(input);
+
+    if (data && data.length > 0) {
+      const formated_data_array = data.map((tag) => ({ title: tag.slug.split('-').join(' '), synonyms: tag.synonyms }));
+      setOptions(formated_data_array);
+    }
+    setSTAGE(STAGE.READY);
+  }
+
+  return useMemo(() => {
+    function Input(params) {
+      return (
+        <TextField
+          {...params}
+          onChange={(e) => autoComplete(e.target.value)}
+          label={name}
+          variant="outlined"
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <>
+                {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
+                {params.InputProps.endAdornment}
+              </>
+            )
+          }}
+        />
+      );
+    }
+
+    function evtInputChange(event, values) {
+      setValue(values);
+    }
+
+    return (
+      <>
+        <Autocomplete
+          value={value}
+          multiple
+          options={options}
+          getOptionLabel={(option) => {
+            let message = `${option.title}`;
+            if (option.synonyms != null && option.synonyms.length > 0) {
+              message += `(${option.synonyms.map((tag) => tag.slug).join(', ')}})`;
+            }
+            return message;
+          }}
+          filterSelectedOptions
+          fullWidth
+          loading={stage == STAGE.LOADING ? true : false}
+          noOptionsText="> Type to load"
+          freeSolo
+          onChange={evtInputChange}
+          renderInput={Input}
+          getOptionSelected={(v, n) => {
+            if (v.inputValue != null) return false;
+            return n.slug == v.slug ? true : false;
+          }}
+        />
+      </>
+    );
+  }, [options, stage, value]);
+});
+
+export function ModalAddAnnouncement({ show, onClose }) {
+  const classes = useStyles();
 
   return !show ? null : (
     <Modal
@@ -421,7 +550,7 @@ export function ModalAddAnnouncement({ show }) {
       aria-describedby="transition-modal-description"
       className={classes.modal}
       open={show}
-      onClose={evtClose}
+      onClose={onClose}
       closeAfterTransition
       BackdropComponent={Backdrop}
       BackdropProps={{
@@ -430,7 +559,7 @@ export function ModalAddAnnouncement({ show }) {
     >
       <Fade in={show}>
         <div className={classes.paper}>
-          <AnnouncementListView />
+          <AnnouncementListView onClose={onClose} />
         </div>
       </Fade>
     </Modal>

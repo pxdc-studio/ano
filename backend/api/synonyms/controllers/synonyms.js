@@ -10,7 +10,31 @@ const { createTags, createResources, createSynonyms } = strapi.config.functions[
   "common"
 ];
 
+const slugify = require("slugify");
+
 module.exports = {
+  async autocomplete(ctx) {
+    let { slug } = ctx.params;
+
+    slug = slug = slugify(slug, {
+      replacement: "-",
+      lower: true,
+      strict: true,
+    });
+
+    let raw = await strapi
+      .query("synonyms")
+      .model.query((q) => {
+        q.where("synonyms.slug", "LIKE", `${slug}%`);
+        q.orderBy("created_at", "desc");
+      })
+      .fetchAll();
+
+    const result = raw.map((item) =>
+      sanitizeEntity(item, { model: strapi.models.synonyms })
+    );
+    return result;
+  },
   async find(ctx) {
     const user = ctx.state.user;
     const authorId = user ? user.id : -1; // none reachable user id
@@ -43,14 +67,27 @@ module.exports = {
   async create(ctx) {
     const user = ctx.state.user;
     const authorId = user ? user.id : -1; // none reachable user id
+    let { tags: input_tags, slug } = ctx.request.body;
 
-    const { synonyms: input_synonyms } = ctx.request.body; // [{ slug: "some-slug", tags: ["tag", "tag"] }]
+    let [_tags] = await Promise.all([createTags(input_tags, authorId)]);
 
     try {
-      let data = await createSynonyms(input_synonyms, authorId);
+      await strapi.query("synonyms").create(
+        {
+          author: authorId,
+          slug: slugify(slug, {
+            replacement: "-",
+            lower: true,
+            strict: true,
+          }),
+          tags: _tags,
+        },
+        { patch: true }
+      );
 
-      return { status: 200, data: data };
+      return { status: 200 };
     } catch (e) {
+      console.log(e);
       return { status: 400 };
     }
   },
@@ -88,31 +125,36 @@ module.exports = {
     const authorId = user ? user.id : -1; // none reachable user id
 
     const { id } = ctx.params;
-    let { tags, slug } = ctx.request.body;
+    let { tags: input_tags, slug } = ctx.request.body;
+
+    let isOwner = await strapi.query("synonyms").findOne({
+      author: authorId,
+      id: id,
+    });
+
+    if (!isOwner) {
+      return { status: 400 };
+    }
+
+    let [_tags] = await Promise.all([createTags(input_tags, authorId)]);
 
     try {
-      await strapi
-        .query("synonyms")
-        .model.query((q) => {
-          q.where("synonyms.author", authorId);
-          q.andWhere("synonyms.id", id);
-        })
-        .save(
-          {
-            slug: slugify(slug, {
-              replacement: "-",
-              lower: true,
-              strict: true,
-            }),
-            tags: tags.map((tag) =>
-              slugify(tag, { replacement: "-", lower: true, strict: true })
-            ),
-          },
-          { patch: true }
-        );
+      await strapi.query("synonyms").update(
+        { id: id },
+        {
+          slug: slugify(slug, {
+            replacement: "-",
+            lower: true,
+            strict: true,
+          }),
+          tags: _tags,
+        },
+        { patch: true }
+      );
 
       return { status: 200 };
     } catch (e) {
+      console.log(e);
       return { status: 400 };
     }
   },

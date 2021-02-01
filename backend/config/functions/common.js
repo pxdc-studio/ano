@@ -65,7 +65,6 @@ exports.createTags = async function (input_tags, authorId) {
   }
 
   await create();
-
   return tags;
 };
 
@@ -97,7 +96,6 @@ exports.createResources = async function (input_resources, authorId) {
       resources_to_insert = resources_to_insert.filter(
         (item) => !exist_resources.map((e) => e.url).includes(item.url)
       );
-
       resources_to_insert.map(async (r) => {
         return await strapi
           .query("resources")
