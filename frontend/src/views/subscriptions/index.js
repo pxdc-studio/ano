@@ -6,11 +6,6 @@ import {
   makeStyles,
   Button,
   TextField,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Chip,
   Avatar,
   Popover,
@@ -19,19 +14,17 @@ import {
 } from '@material-ui/core';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Page from 'src/components/Page';
-import { getAllSubscriptions, deleteSubscription, getFilterData } from 'src/services/subscriptionService';
 import { toast } from 'react-toastify';
 import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
 import { bindPopover } from 'material-ui-popup-state';
 import { usePopupState } from 'material-ui-popup-state/hooks';
-// import Popover from 'material-ui-popup-state/HoverPopover';
 
 import { Formik } from 'formik';
 import AddIcon from '@material-ui/icons/Add';
 import { getAuthorsAutocomplete } from 'src/services/authorService';
 import { getTagsAutocomplete } from 'src/services/tagsServices';
 import { getSynonymsAutocomplete } from 'src/services/synonymsService';
-import { postSubscription } from 'src/services/subscriptionService';
+import { postSubscription, getAllSubscriptions } from 'src/services/subscriptionService';
 import { Authors } from './author.autocomplete';
 
 /**
@@ -96,12 +89,12 @@ export default function () {
     popupId: 'sub-popover'
   });
 
-  let tagRef = useRef();
-  let authorRef = useRef();
-  let synonymRef = useRef();
+  const tagRef = useRef();
+  const authorRef = useRef();
+  const synonymRef = useRef();
 
   function onSingleTagUpdate(value) {
-    let tag = tags.find((tag) => {
+    const tag = tags.find((tag) => {
       if (tag.tag) return tag.tag.id == value.id;
       else return tag.id == value.id;
     });
@@ -118,9 +111,10 @@ export default function () {
       try {
         const { status, data } = await getAllSubscriptions();
         if (status === 200) {
-          setTags(data.tags);
-          setSynonyms(data.synonyms);
-          setAuthors(data.authors);
+          //due to sql response, id is normalized to tag_id, not joined id
+          setTags(data.tags.map((item) => ({ ...item, id: item.tag.id })));
+          setSynonyms(data.synonyms.map((item) => ({ ...item, id: item.synonym.id })));
+          setAuthors(data.authors.map((item) => ({ ...item, id: item.author.id })));
           setLoader(false);
         }
       } catch (ex) {
@@ -134,6 +128,7 @@ export default function () {
 
   async function _handleSubmit(e) {
     setLoader(true);
+
     await postSubscription({
       tags: tags,
       authors: authorRef.current.value,
@@ -383,10 +378,10 @@ export const SynonymsBox = forwardRef(
 
     useEffect(() => {
       if ((_value != null || (_value && _value.length < 1)) && _value != value) {
-        let mapped = _value.map((synonym) => ({
-          title: synonym.synonym.slug,
-          exclude_authors: synonym.exclude_authors,
-          id: synonym.id
+        let mapped = _value.map((data) => ({
+          title: data.synonym.slug,
+          exclude_authors: data.exclude_authors,
+          id: data.synonym.id
         }));
         setValue(mapped);
       }
@@ -397,7 +392,7 @@ export const SynonymsBox = forwardRef(
         let mapped = _value.map((synonym) => ({
           title: synonym.synonym.slug,
           exclude_authors: synonym.exclude_authors,
-          id: synonym.id
+          id: data.synonym.id
         }));
         setOptions(mapped);
       }
@@ -413,7 +408,7 @@ export const SynonymsBox = forwardRef(
 
       let { data } = await service(input);
       if (data && data.length > 0) {
-        const formated_data_array = data.map((synonym) => ({ title: synonym.slug.split('-').join(' ') }));
+        const formated_data_array = data.map((data) => ({ title: data.slug.split('-').join(' '), id: data.id }));
         setOptions(formated_data_array);
       }
       setSTAGE(STAGE.READY);
@@ -499,7 +494,6 @@ export const AuthorsBox = forwardRef(
     let [options, setOptions] = useState(_options || []);
     const [selected, setSelected] = useState(null);
     const [stage, setSTAGE] = useState(STAGE.READY);
-    console.log(_value);
     useImperativeHandle(parentRef, () => ({
       value
     }));
@@ -510,7 +504,7 @@ export const AuthorsBox = forwardRef(
           username: data.author.username,
           title: data.author.username,
           exclude_tags: data.exclude_tags,
-          id: data.id
+          id: data.author.id
         }));
         setValue(mapped);
       }
@@ -522,7 +516,7 @@ export const AuthorsBox = forwardRef(
           username: data.author.username,
           title: data.author.username,
           exclude_tags: data.exclude_tags,
-          id: data.id
+          id: data.author.id
         }));
         setOptions(mapped);
       }
