@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -14,26 +14,36 @@ import {
   Chip,
   Avatar,
   Popover,
-  Typography
+  Typography,
+  CircularProgress
 } from '@material-ui/core';
-import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
-import MaterialTable from 'material-table';
-import { useNavigate } from 'react-router-dom';
-import { Search as SearchIcon, RotateCw as ResetIcon } from 'react-feather';
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Page from 'src/components/Page';
 import { getAllSubscriptions, deleteSubscription, getFilterData } from 'src/services/subscriptionService';
 import { toast } from 'react-toastify';
-import Autocomplete from '@material-ui/lab/Autocomplete';
-import PopupState, { bindTrigger, bindPopover } from 'material-ui-popup-state';
+import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
+import { bindPopover } from 'material-ui-popup-state';
+import { usePopupState } from 'material-ui-popup-state/hooks';
+// import Popover from 'material-ui-popup-state/HoverPopover';
+
 import { Formik } from 'formik';
-import * as Yup from 'yup';
 import AddIcon from '@material-ui/icons/Add';
+import { getAuthorsAutocomplete } from 'src/services/authorService';
+import { getTagsAutocomplete } from 'src/services/tagsServices';
+import { getSynonymsAutocomplete } from 'src/services/synonymsService';
+import { postSubscription } from 'src/services/subscriptionService';
+import { Authors } from './author.autocomplete';
 
 /**
  * path: /app/subscriptions
  *      description: subscriptions CRUD
  */
-
+const STAGE = {
+  READY: 0,
+  SUCCESS: 1,
+  LOADING: 2,
+  LOADED: 3
+};
 // Styles for root component
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -71,228 +81,543 @@ const themeTable = createMuiTheme({
   }
 });
 
-const Subs = () => {
-  const initalSubsValues = {
-    authStatus: 'author.name_eq',
-    authorName: '',
-    tagStatus: 'tag.name_eq',
-    tagName: ''
-  };
-  const navigate = useNavigate();
+export default function () {
   const classes = useStyles();
-  const theme = useTheme();
-  const [subscriptions, setSubscriptions] = useState(null);
-  const [loader, setLoader] = useState(true);
-  // eslint-disable-next-line no-unused-vars
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [queryObj, setQueryObj] = useState(initalSubsValues);
-  // Subscription fetch request function define
-  const fetchAllSubscriptions = async () => {
-    try {
-      const { status, data } = await getAllSubscriptions();
-      if (status === 200) {
-        setSubscriptions(data);
-        console.log(data);
-        setLoader(false);
-      }
-    } catch (ex) {
-      toast.error(ex.response.data.message);
-      setSubscriptions([]);
-      setLoader(false);
-    }
-  };
-  //Filtered data bilding function
-  const handleChange = ({ target: { name, value } }) => {
-    setQueryObj({ ...queryObj, [name]: value });
-  };
-  //Filtered Query Param Service Call
-  const handleSubmitFiltered = async () => {
-    try {
-      const { status, data } = await getFilterData(queryObj);
-      if (status === 200) {
-        setSubscriptions(data);
-      }
-    } catch (ex) {
-      toast.error('Your Seach Value is ', ex.response);
-    }
-  };
+  const [tags, setTags] = useState([]);
+  const [authors, setAuthors] = useState([]);
+  const [synonyms, setSynonyms] = useState([]);
 
-  //Filtered Input values Reset Values
-  const handleReset = () => {
-    setQueryObj(initalSubsValues);
-    fetchAllSubscriptions();
-  };
+  const [loader, setLoader] = useState(false);
+  const [selected, setSelected] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+
+  const popupState = usePopupState({
+    variant: 'popper',
+    popupId: 'sub-popover'
+  });
+
+  let tagRef = useRef();
+  let authorRef = useRef();
+  let synonymRef = useRef();
+
+  function onSingleTagUpdate(value) {
+    let tag = tags.find((tag) => {
+      if (tag.tag) return tag.tag.id == value.id;
+      else return tag.id == value.id;
+    });
+    tag.exclude_authors = value.exclude_authors;
+    setTags(tags);
+  }
+
+  function onEveryTagsUpdate(value) {
+    setTags(value);
+  }
 
   useEffect(() => {
-    // Announcements fetch request function call
+    async function fetchAllSubscriptions() {
+      try {
+        const { status, data } = await getAllSubscriptions();
+        if (status === 200) {
+          setTags(data.tags);
+          setSynonyms(data.synonyms);
+          setAuthors(data.authors);
+          setLoader(false);
+        }
+      } catch (ex) {
+        toast.error(ex.response.data.message);
+        setLoader(false);
+      }
+    }
+
     fetchAllSubscriptions();
   }, []);
 
-  // Subscription remove function define
-  const handleDeleteSubscription = async (id) => {
-    const { status } = await deleteSubscription(id);
-    if (status === 200) {
-      fetchAllSubscriptions();
-    }
-  };
-
-  const top100Films = [
-    { title: 'Mr A', year: 1994 },
-    { title: 'Mr B', year: 1972 },
-    { title: 'Mrs C', year: 1974 }
-  ];
-
-  function _handleSubmit() {}
-
-  const validation = Yup.object().shape({
-    title: Yup.string().max(80).required('Title is required'),
-    message: Yup.string().max(280).required('Message is required')
-  });
-
-  function Form({ errors, handleBlur, handleChange, handleSubmit, isSubmitting }) {
-    return (
-      <>
-        <form onSubmit={handleSubmit}>
-          <Box mb={3}>
-            <Typography color="textPrimary" variant="h2">
-              Subscription
-            </Typography>
-          </Box>
-          {/* <Autocomplete
-            id="tags-outlined"
-            options={top100Films}
-            getOptionLabel={(option) => option.title}
-            defaultValue={[top100Films[1]]}
-            filterSelectedOptions
-            multiple
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => {
-                return <ChipWithPopper {...getTagProps({ index })} label={option.title} />;
-              })
-            }
-            renderInput={(params) => (
-              <TextField {...params} variant="outlined" label="Subcribed Author" placeholder="Tags" />
-            )}
-          /> */}
-
-          <br />
-          <Autocomplete
-            options={subscriptions ? subscriptions.tags : []}
-            getOptionLabel={(option) => option.tag.slug}
-            value={subscriptions ? subscriptions.tags : []}
-            multiple
-            filterSelectedOptions
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => {
-                if (option.exclude_authors) {
-                  return (
-                    <ChipWithPopper {...getTagProps({ index })} label={option.tag.slug} data={option.exclude_authors} />
-                  );
-                }
-              })
-            }
-            renderInput={(params) => (
-              <TextField {...params} variant="outlined" label="Subcribed Tags" placeholder="Tags" />
-            )}
-          />
-
-          <Box my={4}>
-            <Button
-              color="primary"
-              disabled={isSubmitting}
-              fullWidth
-              size="large"
-              type="submit"
-              variant="contained"
-              startIcon={<AddIcon />}
-            >
-              Update
-            </Button>
-          </Box>
-        </form>
-      </>
-    );
+  async function _handleSubmit(e) {
+    setLoader(true);
+    await postSubscription({
+      tags: tags,
+      authors: authorRef.current.value,
+      synonyms: synonymRef.current.value
+    });
+    setLoader(false);
   }
 
   return (
-    <Page className={classes.root} title="Tags">
+    <Page className={classes.root} title="Subcriptions">
       <Container maxWidth={false}>
         <Box mt={3}>
           <MuiThemeProvider theme={themeTable}>
-            <Formik validationSchema={validation} onSubmit={_handleSubmit} initialValues={{}}>
-              {Form}
+            <Formik onSubmit={_handleSubmit} initialValues={{}}>
+              {function Form({ errors, handleBlur, handleChange, handleSubmit }) {
+                return (
+                  <>
+                    <form onSubmit={handleSubmit}>
+                      <Box mb={3}>
+                        <Typography color="textPrimary" variant="h2">
+                          Subscription
+                        </Typography>
+                      </Box>
+
+                      <br />
+
+                      <TagsBox
+                        name="Tags"
+                        service={getTagsAutocomplete}
+                        ref={tagRef}
+                        value={tags}
+                        popupState={popupState}
+                        onSelect={(option) => setSelected(option)}
+                        onEveryTagsUpdate={onEveryTagsUpdate}
+                      />
+                      <br />
+
+                      <SynonymsBox
+                        name="Synonyms"
+                        service={getSynonymsAutocomplete}
+                        ref={synonymRef}
+                        value={synonyms}
+                      />
+
+                      <br />
+                      <AuthorsBox name="Authors" service={getAuthorsAutocomplete} ref={authorRef} value={authors} />
+                      <Box my={4}>
+                        <Button
+                          color="primary"
+                          disabled={loader}
+                          fullWidth
+                          size="large"
+                          type="submit"
+                          variant="contained"
+                          startIcon={<AddIcon />}
+                        >
+                          Update
+                        </Button>
+                      </Box>
+                    </form>
+                  </>
+                );
+              }}
             </Formik>
           </MuiThemeProvider>
         </Box>
+        <Popover
+          {...bindPopover(popupState)}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center'
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'center'
+          }}
+        >
+          <Box p={2} minWidth={320}>
+            <Authors
+              name="Excluded Authors"
+              service={getAuthorsAutocomplete}
+              ref={authorRef}
+              data={selected}
+              onChange={onSingleTagUpdate}
+            />
+          </Box>
+        </Popover>
       </Container>
     </Page>
   );
-};
-
-function ChipWithPopper({ data, ...props }) {
-  const classes = useStyles();
-
-  const handleDelete = () => {
-    console.info('You clicked the delete icon.');
-  };
-
-  const handleClick = () => {
-    console.info('You clicked the Chip.');
-  };
-
-  const top100Films = [
-    { title: 'Mr A', year: 1994 },
-    { title: 'Mr B', year: 1972 },
-    { title: 'Mrs C', year: 1974 }
-  ];
-
-  return (
-    <PopupState variant="popover" popupId="demo-popup-popover">
-      {(popupState) => (
-        <div style={{ display: 'inline-block' }}>
-          <Chip
-            size="small"
-            avatar={<Avatar>M</Avatar>}
-            label="Author Name"
-            onClick={handleClick}
-            onDelete={handleDelete}
-            {...bindTrigger(popupState)}
-            {...props}
-          />
-          <Popover
-            {...bindPopover(popupState)}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'center'
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'center'
-            }}
-          >
-            <Box p={2} className={classes.tags_popper}>
-              <Autocomplete
-                multiple
-                id="size-small-standard-multi"
-                size="small"
-                options={data}
-                getOptionLabel={(option) => option.title}
-                value={data}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant="outlined"
-                    label="Excludes From Author"
-                    placeholder="Tags or Synonyms"
-                  />
-                )}
-              />
-            </Box>
-          </Popover>
-        </div>
-      )}
-    </PopupState>
-  );
 }
 
-export default Subs;
+const filter = createFilterOptions();
+
+export const TagsBox = forwardRef(
+  (
+    {
+      name,
+      service = () => {},
+      value: _value,
+      options: _options,
+      popupState,
+      onSelect = () => {},
+      onEveryTagsUpdate = () => {}
+    },
+    parentRef
+  ) => {
+    let [value, setValue] = useState(_value || []);
+    let [options, setOptions] = useState(_options || []);
+    const [selected, setSelected] = useState(null);
+    const [stage, setSTAGE] = useState(STAGE.READY);
+
+    useImperativeHandle(parentRef, () => ({
+      value
+    }));
+
+    useEffect(() => {
+      if ((_value != null || (_value && _value.length < 1)) && _value != value) {
+        let mapped = _value.map((tag) => ({
+          title: tag.tag.slug,
+          exclude_authors: tag.exclude_authors,
+          id: tag.tag.id
+        }));
+        setValue(mapped);
+      }
+    }, [_value]);
+
+    useEffect(() => {
+      if ((_options != null || (_options && _options.length < 1)) && _options != options) {
+        let mapped = _value.map((tag) => ({
+          title: tag.tag.slug,
+          exclude_authors: tag.exclude_authors,
+          id: tag.tag.id
+        }));
+        setOptions(mapped);
+      }
+    }, [_options]);
+
+    async function autoComplete(input) {
+      if (input.trim().length == 0) {
+        setOptions([]);
+        return;
+      }
+
+      setSTAGE(STAGE.LOADING);
+
+      let { data } = await service(input);
+      if (data && data.length > 0) {
+        const formated_data_array = data.map((tag) => ({
+          title: tag.slug.split('-').join(' '),
+          id: tag.id
+        }));
+        setOptions(formated_data_array);
+      }
+      setSTAGE(STAGE.READY);
+    }
+
+    function evtInputChange(event, values) {
+      setValue(values);
+      onEveryTagsUpdate(values);
+    }
+
+    return useMemo(() => {
+      function Input(params) {
+        return (
+          <TextField
+            {...params}
+            onChange={(e) => autoComplete(e.target.value)}
+            label={name}
+            variant="outlined"
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
+              )
+            }}
+          />
+        );
+      }
+
+      function evtFilterChange(options, params) {
+        return filter(options, params);
+      }
+
+      return (
+        <>
+          <Autocomplete
+            value={value}
+            options={options}
+            multiple
+            getOptionLabel={(option) => option.title}
+            filterSelectedOptions
+            fullWidth
+            loading={stage == STAGE.LOADING ? true : false}
+            noOptionsText="> Enter to autocomplete tags"
+            onChange={evtInputChange}
+            renderInput={Input}
+            filterOptions={evtFilterChange}
+            getOptionSelected={(v, n) => {
+              if (v.inputValue != null) return false;
+              return n.title == v.title ? true : false;
+            }}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => {
+                return (
+                  <Chip
+                    data-index={index}
+                    size="small"
+                    // avatar={<Avatar>M</Avatar>}
+                    label={option.title}
+                    style={{
+                      background: option.exclude_authors && option.exclude_authors.length > 0 ? 'crimson' : '#eee'
+                    }}
+                    {...getTagProps({ index })}
+                    onClick={(e) => {
+                      onSelect(option);
+                      popupState.close();
+                      popupState.open(e.target);
+                    }}
+                  />
+                );
+              })
+            }
+          />
+        </>
+      );
+    }, [_options, stage, value]);
+  }
+);
+
+export const SynonymsBox = forwardRef(
+  (
+    { name, service = () => {}, value: _value, options: _options, onSelect = () => {}, onEveryTagsUpdate = () => {} },
+    parentRef
+  ) => {
+    let [value, setValue] = useState(_value || []);
+    let [options, setOptions] = useState(_options || []);
+    const [selected, setSelected] = useState(null);
+    const [stage, setSTAGE] = useState(STAGE.READY);
+
+    useImperativeHandle(parentRef, () => ({
+      value
+    }));
+
+    useEffect(() => {
+      if ((_value != null || (_value && _value.length < 1)) && _value != value) {
+        let mapped = _value.map((synonym) => ({
+          title: synonym.synonym.slug,
+          exclude_authors: synonym.exclude_authors,
+          id: synonym.id
+        }));
+        setValue(mapped);
+      }
+    }, [_value]);
+
+    useEffect(() => {
+      if ((_options != null || (_options && _options.length < 1)) && _options != options) {
+        let mapped = _value.map((synonym) => ({
+          title: synonym.synonym.slug,
+          exclude_authors: synonym.exclude_authors,
+          id: synonym.id
+        }));
+        setOptions(mapped);
+      }
+    }, [_options]);
+
+    async function autoComplete(input) {
+      if (input.trim().length == 0) {
+        setOptions([]);
+        return;
+      }
+
+      setSTAGE(STAGE.LOADING);
+
+      let { data } = await service(input);
+      if (data && data.length > 0) {
+        const formated_data_array = data.map((synonym) => ({ title: synonym.slug.split('-').join(' ') }));
+        setOptions(formated_data_array);
+      }
+      setSTAGE(STAGE.READY);
+    }
+
+    function evtInputChange(event, values) {
+      setValue(values);
+      onEveryTagsUpdate(values);
+    }
+
+    return useMemo(() => {
+      function Input(params) {
+        return (
+          <TextField
+            {...params}
+            onChange={(e) => autoComplete(e.target.value)}
+            label={name}
+            variant="outlined"
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
+              )
+            }}
+          />
+        );
+      }
+
+      function evtFilterChange(options, params) {
+        return filter(options, params);
+      }
+
+      return (
+        <>
+          <Autocomplete
+            value={value}
+            options={options}
+            multiple
+            getOptionLabel={(option) => option.title}
+            filterSelectedOptions
+            fullWidth
+            loading={stage == STAGE.LOADING ? true : false}
+            noOptionsText="> Enter to autocomplete tags"
+            onChange={evtInputChange}
+            renderInput={Input}
+            filterOptions={evtFilterChange}
+            getOptionSelected={(v, n) => {
+              if (v.inputValue != null) return false;
+              return n.title == v.title ? true : false;
+            }}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => {
+                return (
+                  <Chip
+                    data-index={index}
+                    size="small"
+                    // avatar={<Avatar>M</Avatar>}
+                    label={option.title}
+                    style={{
+                      background: option.exclude_authors && option.exclude_authors.length > 0 ? 'crimson' : '#eee'
+                    }}
+                    {...getTagProps({ index })}
+                  />
+                );
+              })
+            }
+          />
+        </>
+      );
+    }, [_options, stage, value]);
+  }
+);
+
+export const AuthorsBox = forwardRef(
+  (
+    { name, service = () => {}, value: _value, options: _options, onSelect = () => {}, onEveryTagsUpdate = () => {} },
+    parentRef
+  ) => {
+    let [value, setValue] = useState(_value || []);
+    let [options, setOptions] = useState(_options || []);
+    const [selected, setSelected] = useState(null);
+    const [stage, setSTAGE] = useState(STAGE.READY);
+    console.log(_value);
+    useImperativeHandle(parentRef, () => ({
+      value
+    }));
+
+    useEffect(() => {
+      if ((_value != null || (_value && _value.length < 1)) && _value != value) {
+        let mapped = _value.map((data) => ({
+          username: data.author.username,
+          title: data.author.username,
+          exclude_tags: data.exclude_tags,
+          id: data.id
+        }));
+        setValue(mapped);
+      }
+    }, [_value]);
+
+    useEffect(() => {
+      if ((_options != null || (_options && _options.length < 1)) && _options != options) {
+        let mapped = _value.map((data) => ({
+          username: data.author.username,
+          title: data.author.username,
+          exclude_tags: data.exclude_tags,
+          id: data.id
+        }));
+        setOptions(mapped);
+      }
+    }, [_options]);
+
+    async function autoComplete(input) {
+      if (input.trim().length == 0) {
+        setOptions([]);
+        return;
+      }
+
+      setSTAGE(STAGE.LOADING);
+
+      let { data } = await service(input);
+      if (data && data.length > 0) {
+        data = data.map((d) => {
+          d.title = d.username;
+          return d;
+        });
+        setOptions(data);
+      }
+      setSTAGE(STAGE.READY);
+    }
+
+    function evtInputChange(event, values) {
+      setValue(values);
+      onEveryTagsUpdate(values);
+    }
+
+    return useMemo(() => {
+      function Input(params) {
+        return (
+          <TextField
+            {...params}
+            onChange={(e) => autoComplete(e.target.value)}
+            label={name}
+            variant="outlined"
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
+              )
+            }}
+          />
+        );
+      }
+
+      function evtFilterChange(options, params) {
+        return filter(options, params);
+      }
+
+      return (
+        <>
+          <Autocomplete
+            value={value}
+            options={options}
+            multiple
+            getOptionLabel={(option) => option.username}
+            filterSelectedOptions
+            fullWidth
+            loading={stage == STAGE.LOADING ? true : false}
+            noOptionsText="> Enter to autocomplete tags"
+            onChange={evtInputChange}
+            renderInput={Input}
+            filterOptions={evtFilterChange}
+            getOptionSelected={(v, n) => {
+              if (v.inputValue != null) return false;
+              return n.title == v.title ? true : false;
+            }}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => {
+                return (
+                  <Chip
+                    data-index={index}
+                    size="small"
+                    avatar={
+                      <Avatar>
+                        <>{option.title && option.title.substring(0, 1).toUpperCase()}</>
+                      </Avatar>
+                    }
+                    label={option.title}
+                    style={{
+                      background: option.exclude_authors && option.exclude_authors.length > 0 ? 'crimson' : '#eee'
+                    }}
+                    {...getTagProps({ index })}
+                  />
+                );
+              })
+            }
+          />
+        </>
+      );
+    }, [_options, stage, value]);
+  }
+);

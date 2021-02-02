@@ -11,7 +11,7 @@
       "model": "tags"
     },
     "exclude_authors": {
-      "plugin": "admin",
+      "plugin": "users-permissions",
       "collection": "user"
     }
   }

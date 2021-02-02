@@ -1,0 +1,12 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/authors/find/:slug",
+      "handler": "authors.autocomplete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

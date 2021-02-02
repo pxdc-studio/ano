@@ -607,16 +607,11 @@
                 "exclude_authors": {
                   "required": [
                     "id",
+                    "username",
                     "email"
                   ],
                   "properties": {
                     "id": {
-                      "type": "string"
-                    },
-                    "firstname": {
-                      "type": "string"
-                    },
-                    "lastname": {
                       "type": "string"
                     },
                     "username": {
@@ -625,26 +620,35 @@
                     "email": {
                       "type": "string"
                     },
+                    "provider": {
+                      "type": "string"
+                    },
                     "password": {
                       "type": "string"
                     },
                     "resetPasswordToken": {
                       "type": "string"
                     },
-                    "registrationToken": {
+                    "confirmationToken": {
                       "type": "string"
                     },
-                    "isActive": {
+                    "confirmed": {
                       "type": "boolean"
-                    },
-                    "roles": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
                     },
                     "blocked": {
                       "type": "boolean"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "fullname": {
+                      "type": "string"
+                    },
+                    "created_by": {
+                      "type": "string"
+                    },
+                    "updated_by": {
+                      "type": "string"
                     }
                   }
                 }
@@ -868,16 +872,11 @@
                 "exclude_authors": {
                   "required": [
                     "id",
+                    "username",
                     "email"
                   ],
                   "properties": {
                     "id": {
-                      "type": "string"
-                    },
-                    "firstname": {
-                      "type": "string"
-                    },
-                    "lastname": {
                       "type": "string"
                     },
                     "username": {
@@ -886,26 +885,35 @@
                     "email": {
                       "type": "string"
                     },
+                    "provider": {
+                      "type": "string"
+                    },
                     "password": {
                       "type": "string"
                     },
                     "resetPasswordToken": {
                       "type": "string"
                     },
-                    "registrationToken": {
+                    "confirmationToken": {
                       "type": "string"
                     },
-                    "isActive": {
+                    "confirmed": {
                       "type": "boolean"
-                    },
-                    "roles": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
                     },
                     "blocked": {
                       "type": "boolean"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "fullname": {
+                      "type": "string"
+                    },
+                    "created_by": {
+                      "type": "string"
+                    },
+                    "updated_by": {
+                      "type": "string"
                     }
                   }
                 }

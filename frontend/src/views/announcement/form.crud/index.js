@@ -377,13 +377,18 @@ export const Resources = forwardRef(function ({ name, service = () => {}, value:
   }, [options, stage, value, open, dialogValue]);
 });
 
-export const Tags = forwardRef(function ({ name, service = () => {}, value: _value = [] }, parentRef) {
-  const [value, setValue] = useState(_value);
-  const [options, setOptions] = useState([]);
+export const Tags = forwardRef(function (
+  { name, service = () => {}, value: _value = [], options: _options = [] },
+  parentRef
+) {
+  let [value, setValue] = useState(_value);
+  let [options, setOptions] = useState(_options);
   const [stage, setSTAGE] = useState(STAGE.READY);
 
   useImperativeHandle(parentRef, () => ({
-    value
+    value,
+    setOption: (o) => setOptions(o),
+    setValue: (o) => setValue(o)
   }));
 
   async function autoComplete(input) {

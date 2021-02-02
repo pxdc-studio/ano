@@ -63,33 +63,33 @@ module.exports = {
 
           q.where("announcements.author", "!=", fromUser);
 
-          // tags.forEach((node) => {
-          //   q.orWhere(function () {
-          //     let self = this.where("announcements__tags.tag_id", node.tag.id);
+          tags.forEach((node) => {
+            q.orWhere(function () {
+              let self = this.where("announcements__tags.tag_id", node.tag.id);
 
-          //     if (node.exclude_authors && node.exclude_authors.length > 0) {
-          //       self.andWhere(
-          //         "announcements.author",
-          //         "NOT IN",
-          //         node.exclude_authors.map((author) => author.id)
-          //       );
-          //     }
-          //   });
-          // });
+              if (node.exclude_authors && node.exclude_authors.length > 0) {
+                self.andWhere(
+                  "announcements.author",
+                  "NOT IN",
+                  node.exclude_authors.map((author) => author.id)
+                );
+              }
+            });
+          });
 
-          // sub.authors.forEach((node) => {
-          //   q.orWhere(function () {
-          //     let self = this.where("announcements.author", node.id);
+          sub.authors.forEach((node) => {
+            q.orWhere(function () {
+              let self = this.where("announcements.author", node.id);
 
-          //     if (node.exclude_tags && node.exclude_tags.length > 0) {
-          //       self.andWhere(
-          //         "tags.id",
-          //         "NOT IN",
-          //         node.exclude_tags.map((o) => o.id)
-          //       );
-          //     }
-          //   });
-          // });
+              if (node.exclude_tags && node.exclude_tags.length > 0) {
+                self.andWhere(
+                  "tags.id",
+                  "NOT IN",
+                  node.exclude_tags.map((o) => o.id)
+                );
+              }
+            });
+          });
 
           q.orderBy("postdate", "desc");
         })
