@@ -13,6 +13,9 @@ import {
   // InputLabel,
   // Chip,
   // FormHelperText,
+  withStyles,
+  Grid,
+  Switch,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -26,7 +29,7 @@ import {
 import * as Yup from 'yup';
 // import { toast } from 'react-toastify';
 import { Formik } from 'formik';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Page from 'src/components/Page';
 // import TagsModal from 'src/components/tagsModal';
 import { postAnnouncement, putAnnouncement } from 'src/services/announcementService';
@@ -38,6 +41,47 @@ import { getSynonymsAutocomplete } from 'src/services/synonymsService';
 import AddIcon from '@material-ui/icons/Add';
 import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
 import CheckCircle from '@material-ui/icons/CheckCircle';
+
+import { AutocompleteByTagName } from './tags.autocomplete';
+import R, { AutocompleteResourceByName } from './resources.autocomplete';
+import { Synonyms } from './synonyms.autocomplete';
+import { toast } from 'react-toastify';
+
+export { AutocompleteResourceByName as Resources, Synonyms, AutocompleteByTagName as Tags };
+
+const AntSwitch = withStyles((theme) => ({
+  root: {
+    width: 28,
+    height: 16,
+    padding: 0,
+    display: 'flex'
+  },
+  switchBase: {
+    padding: 2,
+    color: theme.palette.grey[500],
+    '&$checked': {
+      transform: 'translateX(12px)',
+      color: theme.palette.common.white,
+      '& + $track': {
+        opacity: 1,
+        backgroundColor: theme.palette.primary.main,
+        borderColor: theme.palette.primary.main
+      }
+    }
+  },
+  thumb: {
+    width: 12,
+    height: 12,
+    boxShadow: 'none'
+  },
+  track: {
+    border: `1px solid ${theme.palette.grey[500]}`,
+    borderRadius: 16 / 2,
+    opacity: 1,
+    backgroundColor: theme.palette.common.white
+  },
+  checked: {}
+}))(Switch);
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -74,27 +118,44 @@ let STAGE = {
   LOADED: 3
 };
 
-const AnnouncementListView = ({ onClose }) => {
+const AnnouncementListView = ({ action }) => {
+  const { state: _state } = useLocation();
+  const [state, setState] = useState(_state || {});
   const classes = useStyles();
   const [stage, setStage] = useState(STAGE.READY);
   const resourceRef = useRef();
   const tagRef = useRef();
   const synonymRef = useRef();
 
+  let navigate = useNavigate();
+
   // Save and Update Announcement
   const _handleSubmit = async (values) => {
-    setStage(STAGE.LOADING);
+    try {
+      setStage(STAGE.LOADING);
+      let payload = {
+        id: state.id,
+        title: values.title,
+        message: values.message,
+        tags: tagRef.current.value,
+        resources: resourceRef.current.value,
+        synonyms: synonymRef.current.value,
+        status: state.status
+      };
 
-    let { status } = await postAnnouncement({
-      title: values.title,
-      message: values.message,
-      tags: tagRef.current.value.map((r) => ({ slug: r.title })),
-      resources: resourceRef.current.value.map((r) => ({ slug: r.title, url: r.url })),
-      synonyms: synonymRef.current.value.map((r) => ({ slug: r.title }))
-    });
+      let { data } = action == 'update' ? await putAnnouncement(payload) : await postAnnouncement(payload);
 
-    if (status === 200) {
-      setStage(STAGE.SUCCESS);
+      const { status, message } = data;
+
+      if (status === 200) {
+        toast.success(message);
+        navigate('/announcements/me');
+      } else {
+        toast.error(message);
+      }
+    } catch (e) {
+      console.log(e);
+      toast.error('Server Error');
     }
   };
 
@@ -104,12 +165,14 @@ const AnnouncementListView = ({ onClose }) => {
         <form onSubmit={handleSubmit}>
           <Box mb={3}>
             <Typography color="textPrimary" variant="h2">
-              New Announcement
+              {action == 'update' ? 'Update' : 'New'} Announcement
             </Typography>
           </Box>
 
           <TextField
             // eslint-disable-next-line no-unneeded-ternary
+
+            defaultValue={state.title}
             error={errors.title != null}
             fullWidth
             label="Title"
@@ -123,6 +186,7 @@ const AnnouncementListView = ({ onClose }) => {
 
           <TextField
             // eslint-disable-next-line no-unneeded-ternary
+            defaultValue={state.message}
             error={errors.message != null}
             fullWidth
             label="Message"
@@ -136,12 +200,29 @@ const AnnouncementListView = ({ onClose }) => {
             onChange={handleChange}
             variant="outlined"
           />
-          <Resources name="Resource" service={getResourceAutocomplete} ref={resourceRef} />
+          <AutocompleteResourceByName ref={resourceRef} value={state.resources} />
           <br />
-          <Tags name="Tags" service={getTagsAutocomplete} ref={tagRef} />
+          <AutocompleteByTagName ref={tagRef} value={state.tags} />
           <br />
-          <Synonyms name="Synonyms" service={getSynonymsAutocomplete} ref={synonymRef} />
-
+          <Synonyms name="Synonyms" ref={synonymRef} value={state.synonyms} />
+          {action == 'update' && (
+            <Typography component="div" style={{ marginTop: 16 }}>
+              <Grid component="label" container alignItems="center" spacing={1}>
+                <Grid item>Archived</Grid>
+                <Grid item>
+                  <AntSwitch
+                    checked={state.status == 'active'}
+                    onChange={(e) => {
+                      state.status = state.status == 'active' ? 'archived' : 'active';
+                      setState({ ...state });
+                    }}
+                    name="status"
+                  />
+                </Grid>
+                <Grid item>Active</Grid>
+              </Grid>
+            </Typography>
+          )}
           <Box my={4}>
             <Button
               color="primary"
@@ -152,7 +233,7 @@ const AnnouncementListView = ({ onClose }) => {
               variant="contained"
               startIcon={<AddIcon />}
             >
-              Create
+              {action == 'update' ? 'Update' : 'Create'}
             </Button>
           </Box>
         </form>
@@ -169,9 +250,8 @@ const AnnouncementListView = ({ onClose }) => {
     <Page className={classes.root} title="Announcement">
       <Box display="flex" flexDirection="column" height="100%" justifyContent="center">
         <Container maxWidth="sm">
-          <Success show={stage == STAGE.SUCCESS} onClose={onClose} />
           <Loading show={stage == STAGE.LOADING} />
-          <Formik validationSchema={validation} onSubmit={_handleSubmit} initialValues={{}}>
+          <Formik validationSchema={validation} onSubmit={_handleSubmit} initialValues={state}>
             {Form}
           </Formik>
         </Container>
@@ -201,350 +281,6 @@ function Loading({ show }) {
     </div>
   );
 }
-
-function Success({ show, onClose }) {
-  const classes = useStyles();
-
-  return !show ? null : (
-    <div>
-      <Modal
-        aria-labelledby="transition-modal-title"
-        aria-describedby="transition-modal-description"
-        className={classes.modal}
-        open={show}
-        onClose={onClose}
-        closeAfterTransition
-        BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500
-        }}
-      >
-        <Fade in={show}>
-          <div className={classes.paper}>
-            <p>
-              <CheckCircle color="primary" />
-              <span>Post Success.</span>
-            </p>
-          </div>
-        </Fade>
-      </Modal>
-    </div>
-  );
-}
-
-let filter = createFilterOptions();
-
-export const Resources = forwardRef(function ({ name, service = () => {}, value: _value = [] }, parentRef) {
-  const [value, setValue] = useState(_value);
-  const [options, setOptions] = useState([]);
-  const [stage, setSTAGE] = useState(STAGE.READY);
-  const [open, setOpen] = useState(false);
-  const [dialogValue, setDialogValue] = useState({
-    title: '',
-    url: ''
-  });
-
-  useImperativeHandle(parentRef, () => ({
-    value
-  }));
-
-  async function autoComplete(input) {
-    if (input.trim().length == 0) {
-      setOptions([]);
-      return;
-    }
-    setSTAGE(STAGE.LOADING);
-    let { data } = await service(input);
-    if (data && data.length > 0) {
-      const formated_data_array = data.map((tag) => ({ title: tag.slug.split('-').join(' '), url: tag.url }));
-      setOptions(formated_data_array);
-    }
-    setSTAGE(STAGE.READY);
-  }
-
-  return useMemo(() => {
-    function Input(params) {
-      return (
-        <TextField
-          {...params}
-          onChange={(e) => autoComplete(e.target.value)}
-          label={name}
-          variant="outlined"
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
-                {params.InputProps.endAdornment}
-              </>
-            )
-          }}
-        />
-      );
-    }
-
-    function evtInputChange(event, values) {
-      const newItem = values.find((item) => item.inputValue != null);
-
-      if (newItem) {
-        setOpen(true);
-        setDialogValue({
-          title: newItem.inputValue,
-          url: ''
-        });
-        return;
-      }
-
-      setValue(values);
-    }
-
-    function evtFilterChange(options, params) {
-      const filtered = filter(options, params);
-
-      if (params.inputValue.trim() !== '') {
-        filtered.push({
-          inputValue: params.inputValue,
-          title: `${params.inputValue}*`
-        });
-      }
-      return filtered;
-    }
-
-    function evtAddNew(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      let exist = value.find((item) => item.url == dialogValue.url);
-      if (exist) {
-        setOpen(false);
-        return;
-      }
-
-      setValue([...value, dialogValue]);
-      setOpen(false);
-    }
-
-    return (
-      <>
-        <Autocomplete
-          value={value}
-          multiple
-          options={options}
-          getOptionLabel={(option) => option.title}
-          filterSelectedOptions
-          fullWidth
-          loading={stage == STAGE.LOADING ? true : false}
-          noOptionsText="> Type to load"
-          freeSolo
-          onChange={evtInputChange}
-          renderInput={Input}
-          filterOptions={evtFilterChange}
-          getOptionSelected={(v, n) => {
-            if (v.inputValue != null) return false;
-            return n.url == v.url ? true : false;
-          }}
-        />
-        <Dialog open={open} aria-labelledby="form-dialog-title">
-          <form onSubmit={evtAddNew}>
-            <DialogTitle>Add a new resource</DialogTitle>
-            <DialogContent>
-              <DialogContentText>Did you miss the Resource in the list? Please, add it!</DialogContentText>
-              <TextField
-                margin="dense"
-                value={dialogValue.title}
-                onChange={(event) => setDialogValue({ ...dialogValue, title: event.target.value })}
-                label="title"
-                type="text"
-              />
-              <TextField
-                autoFocus
-                margin="dense"
-                value={dialogValue.url}
-                onChange={(event) => setDialogValue({ ...dialogValue, url: event.target.value })}
-                label="url"
-                type="text"
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button color="primary">Cancel</Button>
-              <Button type="submit" color="primary">
-                Add
-              </Button>
-            </DialogActions>
-          </form>
-        </Dialog>
-      </>
-    );
-  }, [options, stage, value, open, dialogValue]);
-});
-
-export const Tags = forwardRef(function (
-  { name, service = () => {}, value: _value = [], options: _options = [] },
-  parentRef
-) {
-  let [value, setValue] = useState(_value);
-  let [options, setOptions] = useState(_options);
-  const [stage, setSTAGE] = useState(STAGE.READY);
-
-  useImperativeHandle(parentRef, () => ({
-    value,
-    setOption: (o) => setOptions(o),
-    setValue: (o) => setValue(o)
-  }));
-
-  async function autoComplete(input) {
-    if (input.trim().length == 0) {
-      setOptions([]);
-      return;
-    }
-    setSTAGE(STAGE.LOADING);
-    let { data } = await service(input);
-    if (data && data.length > 0) {
-      const formated_data_array = data.map((tag) => ({ title: tag.slug.split('-').join(' ') }));
-      setOptions(formated_data_array);
-    }
-    setSTAGE(STAGE.READY);
-  }
-
-  return useMemo(() => {
-    function Input(params) {
-      return (
-        <TextField
-          {...params}
-          onChange={(e) => autoComplete(e.target.value)}
-          label={name}
-          variant="outlined"
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
-                {params.InputProps.endAdornment}
-              </>
-            )
-          }}
-        />
-      );
-    }
-
-    function evtInputChange(event, values) {
-      setValue(values);
-    }
-
-    function evtFilterChange(options, params) {
-      const filtered = filter(options, params);
-
-      if (params.inputValue.trim() !== '') {
-        filtered.push({
-          slug: params.inputValue,
-          title: `${params.inputValue}*`
-        });
-      }
-      return filtered;
-    }
-
-    return (
-      <>
-        <Autocomplete
-          value={value}
-          multiple
-          options={options}
-          getOptionLabel={(option) => option.title}
-          filterSelectedOptions
-          fullWidth
-          loading={stage == STAGE.LOADING ? true : false}
-          noOptionsText="> Type to load"
-          freeSolo
-          onChange={evtInputChange}
-          renderInput={Input}
-          filterOptions={evtFilterChange}
-          getOptionSelected={(v, n) => {
-            if (v.inputValue != null) return false;
-            return n.slug == v.slug ? true : false;
-          }}
-        />
-      </>
-    );
-  }, [options, stage, value]);
-});
-
-export const Synonyms = forwardRef(function ({ name, service = () => {}, value: _value = [] }, parentRef) {
-  const [value, setValue] = useState(_value);
-  const [options, setOptions] = useState([]);
-  const [stage, setSTAGE] = useState(STAGE.READY);
-
-  useImperativeHandle(parentRef, () => ({
-    value
-  }));
-
-  async function autoComplete(input) {
-    if (input.trim().length == 0) {
-      setOptions([]);
-      return;
-    }
-    setSTAGE(STAGE.LOADING);
-    let { data } = await service(input);
-
-    if (data && data.length > 0) {
-      const formated_data_array = data.map((tag) => ({ title: tag.slug.split('-').join(' '), synonyms: tag.synonyms }));
-      setOptions(formated_data_array);
-    }
-    setSTAGE(STAGE.READY);
-  }
-
-  return useMemo(() => {
-    function Input(params) {
-      return (
-        <TextField
-          {...params}
-          onChange={(e) => autoComplete(e.target.value)}
-          label={name}
-          variant="outlined"
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
-                {params.InputProps.endAdornment}
-              </>
-            )
-          }}
-        />
-      );
-    }
-
-    function evtInputChange(event, values) {
-      setValue(values);
-    }
-
-    return (
-      <>
-        <Autocomplete
-          value={value}
-          multiple
-          options={options}
-          getOptionLabel={(option) => {
-            let message = `${option.title}`;
-            if (option.synonyms != null && option.synonyms.length > 0) {
-              message += `(${option.synonyms.map((tag) => tag.slug).join(', ')}})`;
-            }
-            return message;
-          }}
-          filterSelectedOptions
-          fullWidth
-          loading={stage == STAGE.LOADING ? true : false}
-          noOptionsText="> Type to load"
-          freeSolo
-          onChange={evtInputChange}
-          renderInput={Input}
-          getOptionSelected={(v, n) => {
-            if (v.inputValue != null) return false;
-            return n.slug == v.slug ? true : false;
-          }}
-        />
-      </>
-    );
-  }, [options, stage, value]);
-});
 
 export function ModalAddAnnouncement({ show, onClose }) {
   const classes = useStyles();

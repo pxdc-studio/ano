@@ -8,7 +8,7 @@ export function getSynonymsAutocomplete(slug) {
   });
 }
 
-export function getAllSynonyms({ pageSize = 5, page = 1 } = {}) {
+export function getAllSynonyms({ pageSize = 5, page = 0 } = {}) {
   return http.get(`${apiEndpoint}/?pageSize=${pageSize}&page=${page}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
   });

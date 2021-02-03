@@ -2,7 +2,7 @@
   "routes": [
     {
       "method": "GET",
-      "path": "/tags/find/:slug",
+      "path": "/tags/find/:name",
       "handler": "tags.autocomplete",
       "config": {
         "policies": []

@@ -522,7 +522,7 @@
           "id": {
             "type": "string"
           },
-          "user": {
+          "author": {
             "required": [
               "id",
               "username",
@@ -570,528 +570,706 @@
               }
             }
           },
-          "tags": {
+          "excludes": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": [
-                "id"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "tag": {
-                  "required": [
-                    "id",
-                    "slug"
-                  ],
+              "oneOf": [
+                {
                   "properties": {
-                    "id": {
-                      "type": "string"
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
                     },
-                    "slug": {
+                    "id": {
                       "type": "string"
                     },
                     "author": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
+                      "required": [
+                        "id",
+                        "username",
+                        "email"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "provider": {
+                          "type": "string"
+                        },
+                        "password": {
+                          "type": "string"
+                        },
+                        "resetPasswordToken": {
+                          "type": "string"
+                        },
+                        "confirmationToken": {
+                          "type": "string"
+                        },
+                        "confirmed": {
+                          "type": "boolean"
+                        },
+                        "blocked": {
+                          "type": "boolean"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "fullname": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
                     }
-                  }
-                },
-                "exclude_authors": {
+                  },
                   "required": [
-                    "id",
-                    "username",
-                    "email"
-                  ],
+                    "id"
+                  ]
+                },
+                {
                   "properties": {
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
+                    },
                     "id": {
                       "type": "string"
                     },
-                    "username": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "provider": {
-                      "type": "string"
-                    },
-                    "password": {
-                      "type": "string"
-                    },
-                    "resetPasswordToken": {
-                      "type": "string"
-                    },
-                    "confirmationToken": {
-                      "type": "string"
-                    },
-                    "confirmed": {
-                      "type": "boolean"
-                    },
-                    "blocked": {
-                      "type": "boolean"
-                    },
-                    "role": {
-                      "type": "string"
-                    },
-                    "fullname": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
+                    "synonym": {
+                      "required": [
+                        "id",
+                        "name",
+                        "slug"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "tags": {
+                          "type": "component"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
                     }
-                  }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                },
+                {
+                  "properties": {
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "tag": {
+                      "required": [
+                        "id",
+                        "slug",
+                        "name"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "view": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
                 }
-              }
+              ]
             }
           },
-          "synonyms": {
+          "includes": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": [
-                "id"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "synonym": {
-                  "required": [
-                    "id",
-                    "slug"
-                  ],
+              "oneOf": [
+                {
                   "properties": {
-                    "id": {
-                      "type": "string"
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
                     },
-                    "slug": {
+                    "id": {
                       "type": "string"
                     },
                     "author": {
-                      "type": "string"
-                    },
-                    "tags": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
+                      "required": [
+                        "id",
+                        "username",
+                        "email"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "provider": {
+                          "type": "string"
+                        },
+                        "password": {
+                          "type": "string"
+                        },
+                        "resetPasswordToken": {
+                          "type": "string"
+                        },
+                        "confirmationToken": {
+                          "type": "string"
+                        },
+                        "confirmed": {
+                          "type": "boolean"
+                        },
+                        "blocked": {
+                          "type": "boolean"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "fullname": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
                     }
-                  }
-                },
-                "exclude_authors": {
+                  },
                   "required": [
-                    "id",
-                    "username",
-                    "email"
-                  ],
+                    "id"
+                  ]
+                },
+                {
                   "properties": {
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
+                    },
                     "id": {
                       "type": "string"
                     },
-                    "username": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "provider": {
-                      "type": "string"
-                    },
-                    "password": {
-                      "type": "string"
-                    },
-                    "resetPasswordToken": {
-                      "type": "string"
-                    },
-                    "confirmationToken": {
-                      "type": "string"
-                    },
-                    "confirmed": {
-                      "type": "boolean"
-                    },
-                    "blocked": {
-                      "type": "boolean"
-                    },
-                    "role": {
-                      "type": "string"
-                    },
-                    "fullname": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
+                    "synonym": {
+                      "required": [
+                        "id",
+                        "name",
+                        "slug"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "tags": {
+                          "type": "component"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
                     }
-                  }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                },
+                {
+                  "properties": {
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "tag": {
+                      "required": [
+                        "id",
+                        "slug",
+                        "name"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "view": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
                 }
-              }
+              ]
             }
           },
-          "authors": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "id"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "author": {
-                  "required": [
-                    "id",
-                    "username",
-                    "email"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "username": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "provider": {
-                      "type": "string"
-                    },
-                    "password": {
-                      "type": "string"
-                    },
-                    "resetPasswordToken": {
-                      "type": "string"
-                    },
-                    "confirmationToken": {
-                      "type": "string"
-                    },
-                    "confirmed": {
-                      "type": "boolean"
-                    },
-                    "blocked": {
-                      "type": "boolean"
-                    },
-                    "role": {
-                      "type": "string"
-                    },
-                    "fullname": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "exclude_tags": {
-                  "required": [
-                    "id",
-                    "slug"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "slug": {
-                      "type": "string"
-                    },
-                    "author": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+          "digest": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly",
+              "yearly"
+            ]
           }
         }
       },
       "NewSubscriptions": {
         "properties": {
-          "user": {
+          "author": {
             "type": "string"
           },
-          "tags": {
+          "excludes": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": [
-                "id"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "tag": {
-                  "required": [
-                    "id",
-                    "slug"
-                  ],
+              "oneOf": [
+                {
                   "properties": {
-                    "id": {
-                      "type": "string"
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
                     },
-                    "slug": {
+                    "id": {
                       "type": "string"
                     },
                     "author": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
+                      "required": [
+                        "id",
+                        "username",
+                        "email"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "provider": {
+                          "type": "string"
+                        },
+                        "password": {
+                          "type": "string"
+                        },
+                        "resetPasswordToken": {
+                          "type": "string"
+                        },
+                        "confirmationToken": {
+                          "type": "string"
+                        },
+                        "confirmed": {
+                          "type": "boolean"
+                        },
+                        "blocked": {
+                          "type": "boolean"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "fullname": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
                     }
-                  }
-                },
-                "exclude_authors": {
+                  },
                   "required": [
-                    "id",
-                    "username",
-                    "email"
-                  ],
+                    "id"
+                  ]
+                },
+                {
                   "properties": {
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
+                    },
                     "id": {
                       "type": "string"
                     },
-                    "username": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "provider": {
-                      "type": "string"
-                    },
-                    "password": {
-                      "type": "string"
-                    },
-                    "resetPasswordToken": {
-                      "type": "string"
-                    },
-                    "confirmationToken": {
-                      "type": "string"
-                    },
-                    "confirmed": {
-                      "type": "boolean"
-                    },
-                    "blocked": {
-                      "type": "boolean"
-                    },
-                    "role": {
-                      "type": "string"
-                    },
-                    "fullname": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
+                    "synonym": {
+                      "required": [
+                        "id",
+                        "name",
+                        "slug"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "tags": {
+                          "type": "component"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
                     }
-                  }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                },
+                {
+                  "properties": {
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "tag": {
+                      "required": [
+                        "id",
+                        "slug",
+                        "name"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "view": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
                 }
-              }
+              ]
             }
           },
-          "synonyms": {
+          "includes": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": [
-                "id"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "synonym": {
-                  "required": [
-                    "id",
-                    "slug"
-                  ],
+              "oneOf": [
+                {
                   "properties": {
-                    "id": {
-                      "type": "string"
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
                     },
-                    "slug": {
+                    "id": {
                       "type": "string"
                     },
                     "author": {
-                      "type": "string"
-                    },
-                    "tags": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
+                      "required": [
+                        "id",
+                        "username",
+                        "email"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "provider": {
+                          "type": "string"
+                        },
+                        "password": {
+                          "type": "string"
+                        },
+                        "resetPasswordToken": {
+                          "type": "string"
+                        },
+                        "confirmationToken": {
+                          "type": "string"
+                        },
+                        "confirmed": {
+                          "type": "boolean"
+                        },
+                        "blocked": {
+                          "type": "boolean"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "fullname": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
                     }
-                  }
-                },
-                "exclude_authors": {
+                  },
                   "required": [
-                    "id",
-                    "username",
-                    "email"
-                  ],
+                    "id"
+                  ]
+                },
+                {
                   "properties": {
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
+                    },
                     "id": {
                       "type": "string"
                     },
-                    "username": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "provider": {
-                      "type": "string"
-                    },
-                    "password": {
-                      "type": "string"
-                    },
-                    "resetPasswordToken": {
-                      "type": "string"
-                    },
-                    "confirmationToken": {
-                      "type": "string"
-                    },
-                    "confirmed": {
-                      "type": "boolean"
-                    },
-                    "blocked": {
-                      "type": "boolean"
-                    },
-                    "role": {
-                      "type": "string"
-                    },
-                    "fullname": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
+                    "synonym": {
+                      "required": [
+                        "id",
+                        "name",
+                        "slug"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "tags": {
+                          "type": "component"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
                     }
-                  }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                },
+                {
+                  "properties": {
+                    "__component": {
+                      "type": "string",
+                      "enum": [
+                        "subscriptions.authors",
+                        "subscriptions.synonyms",
+                        "subscriptions.tags"
+                      ]
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "tag": {
+                      "required": [
+                        "id",
+                        "slug",
+                        "name"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "view": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "created_by": {
+                          "type": "string"
+                        },
+                        "updated_by": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
                 }
-              }
+              ]
             }
           },
-          "authors": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "id"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "author": {
-                  "required": [
-                    "id",
-                    "username",
-                    "email"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "username": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "provider": {
-                      "type": "string"
-                    },
-                    "password": {
-                      "type": "string"
-                    },
-                    "resetPasswordToken": {
-                      "type": "string"
-                    },
-                    "confirmationToken": {
-                      "type": "string"
-                    },
-                    "confirmed": {
-                      "type": "boolean"
-                    },
-                    "blocked": {
-                      "type": "boolean"
-                    },
-                    "role": {
-                      "type": "string"
-                    },
-                    "fullname": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "exclude_tags": {
-                  "required": [
-                    "id",
-                    "slug"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "slug": {
-                      "type": "string"
-                    },
-                    "author": {
-                      "type": "string"
-                    },
-                    "created_by": {
-                      "type": "string"
-                    },
-                    "updated_by": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+          "digest": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly",
+              "yearly"
+            ]
           },
           "created_by": {
             "type": "string"

@@ -11,6 +11,7 @@ const { createTags, createResources, createSynonyms } = strapi.config.functions[
 ];
 
 const slugify = require("slugify");
+const { result } = require("lodash");
 
 module.exports = {
   async autocomplete(ctx) {
@@ -39,7 +40,7 @@ module.exports = {
     const user = ctx.state.user;
     const authorId = user ? user.id : -1; // none reachable user id
 
-    const { pageSize = 20, page = 1 } = ctx.query;
+    const { pageSize = 20, page = 0 } = ctx.query;
 
     let raw = await strapi
       .query("synonyms")
@@ -67,27 +68,39 @@ module.exports = {
   async create(ctx) {
     const user = ctx.state.user;
     const authorId = user ? user.id : -1; // none reachable user id
-    let { tags: input_tags, slug } = ctx.request.body;
-
-    let [_tags] = await Promise.all([createTags(input_tags, authorId)]);
-
+    let { tags = [], name } = ctx.request.body;
     try {
-      await strapi.query("synonyms").create(
-        {
-          author: authorId,
-          slug: slugify(slug, {
-            replacement: "-",
-            lower: true,
-            strict: true,
-          }),
-          tags: _tags,
-        },
-        { patch: true }
-      );
+      let slug = slugify(name, {
+        replacement: "-",
+        lower: true,
+        strict: true,
+      });
 
-      return { status: 200 };
+      let isExist = await strapi.query("synonyms").findOne({ slug: slug });
+
+      if (isExist) {
+        return {
+          status: 304,
+          message: "Synonym with the same name already exist",
+        };
+      }
+
+      let existingTags = await createTags(tags, authorId);
+
+      await strapi.query("synonyms").create({
+        author: authorId,
+        slug: slug,
+        name: name,
+        tags: existingTags.map((tag) => ({
+          __component: "synonyms.tags",
+          tag: {
+            id: tag.id,
+          },
+        })),
+      });
+
+      return { status: 200, message: "Synonym added successfully" };
     } catch (e) {
-      console.log(e);
       return { status: 400 };
     }
   },
@@ -103,21 +116,21 @@ module.exports = {
       });
 
       if (isInUse) {
-        return { status: 304 }; // inuse
+        return { status: 304, message: "Synonym is in use" }; // inuse
       }
 
       await strapi
         .query("synonyms")
         .model.query((q) => {
-          q.where("synonyms.author", authorId);
-          q.andWhere("synonyms.id", id);
+          q.where("author", authorId);
+          q.andWhere("id", id);
         })
         .destroy();
 
-      return { status: 200 };
+      return { status: 200, message: "Synonym deleted Successfully" };
     } catch (e) {
       console.log(e);
-      return { status: 400 };
+      return { status: 400, message: "Unknow Error Deleting Synonyms" };
     }
   },
   async update(ctx) {
@@ -125,34 +138,44 @@ module.exports = {
     const authorId = user ? user.id : -1; // none reachable user id
 
     const { id } = ctx.params;
-    let { tags: input_tags, slug } = ctx.request.body;
+    let { tags, name } = ctx.request.body;
 
-    let isOwner = await strapi.query("synonyms").findOne({
-      author: authorId,
-      id: id,
+    let slug = slugify(name, {
+      replacement: "-",
+      lower: true,
+      strict: true,
     });
 
-    if (!isOwner) {
-      return { status: 400 };
-    }
-
-    let [_tags] = await Promise.all([createTags(input_tags, authorId)]);
-
     try {
+      let isOwner = await strapi.query("synonyms").findOne({
+        author: authorId,
+        id: id,
+      });
+
+      if (!isOwner) {
+        return {
+          status: 304,
+          message: "You have no permission to edit this Synonyms",
+        };
+      }
+
+      let existingTags = await createTags(tags, authorId);
+
       await strapi.query("synonyms").update(
         { id: id },
         {
-          slug: slugify(slug, {
-            replacement: "-",
-            lower: true,
-            strict: true,
-          }),
-          tags: _tags,
-        },
-        { patch: true }
+          slug: slug,
+          name: name,
+          tags: existingTags.map((tag) => ({
+            __component: "synonyms.tags",
+            tag: {
+              id: tag.id,
+            },
+          })),
+        }
       );
 
-      return { status: 200 };
+      return { status: 200, message: "Synonym Updated Successfully" };
     } catch (e) {
       console.log(e);
       return { status: 400 };

@@ -18,8 +18,9 @@ import ToggleButton from '@material-ui/lab/ToggleButton';
 import { getTagsAutocomplete } from 'src/services/tagsServices';
 import { getResourceAutocomplete } from 'src/services/resourcesService';
 import { getSynonymsAutocomplete } from 'src/services/synonymsService';
-
-import { Resources, Tags, Synonyms } from '../form.crud/index';
+import TagIcon from '@material-ui/icons/Bookmark';
+import TagsIcon from '@material-ui/icons/Bookmarks';
+import { AutocompleteByTagName } from '../form.crud/tags.autocomplete';
 // Styles for root component
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -76,6 +77,7 @@ const STAGE = {
 };
 
 const AnnouncementListView = () => {
+  const navigate = useNavigate();
   const classes = useStyles();
   const theme = useTheme();
   const [loader, setLoader] = useState(true);
@@ -90,6 +92,14 @@ const AnnouncementListView = () => {
       });
 
       if (status == 200) {
+        data.data = data.data.map((item) => {
+          item.synonyms = item.synonyms.map((syn) => {
+            syn.tags = syn.tags.map((tag) => tag.tag);
+            return syn;
+          }); // this is due to sql return nesting object,
+          return item;
+        });
+
         setLoader(false);
         return data;
       }
@@ -105,28 +115,16 @@ const AnnouncementListView = () => {
   let tableRef = useRef();
 
   async function handleDeleteResource({ id }) {
-    const { status } = await deleteAnnouncement(id);
-    if (status === 200) {
-      return true;
-    }
-    return false;
-  }
-
-  async function handleUpdateResource(v, o) {
-    v.resources = resourceRef.current.value;
-    v.synonyms = synonymRef.current.value;
-    v.tags = tagRef.current.value;
-
-    const { status } = await putAnnouncement({
-      id: v.id,
-      title: v.title,
-      message: v.message,
-      tags: tagRef.current.value.map((r) => ({ slug: r.title })),
-      resources: resourceRef.current.value.map((r) => ({ slug: r.title, url: r.url })),
-      synonyms: synonymRef.current.value.map((r) => ({ slug: r.title }))
-    });
-    if (status === 200) {
-      return v;
+    try {
+      const { data } = await deleteAnnouncement(id);
+      let { status, message } = data;
+      if (status === 200) {
+        toast.success(message);
+        return true;
+      }
+      toast.error(message);
+    } catch (e) {
+      toast.error('Server Error');
     }
   }
 
@@ -136,7 +134,9 @@ const AnnouncementListView = () => {
       tooltip: 'Add Announcement',
       position: 'toolbar',
       isFreeAction: true,
-      onClick: () => setStage(STAGE.CREATE)
+      onClick: () => {
+        navigate('/announcements/add');
+      }
     }
   ];
 
@@ -146,21 +146,11 @@ const AnnouncementListView = () => {
       <Container maxWidth={false}>
         <Box mt={3}>
           <MuiThemeProvider theme={themeTable}>
-            <ModalAddAnnouncement
-              show={stage == STAGE.CREATE}
-              onClose={(e) => {
-                tableRef.current && tableRef.current.onQueryChange();
-                setStage(STAGE.READY);
-              }}
-            />
             <MaterialTable
-              tableRef={tableRef}
               title="My Announcement"
               isLoading={loader}
               actions={ACTIONS}
               editable={{
-                // onRowAdd: handleAddResource,
-                onRowUpdate: handleUpdateResource,
                 onRowDelete: handleDeleteResource
               }}
               columns={[
@@ -168,7 +158,7 @@ const AnnouncementListView = () => {
                 {
                   title: 'Status',
                   field: 'status',
-                  lookup: { active: 'Active', archieved: 'Archieved' }
+                  lookup: { active: 'Active', archived: 'Archived' }
                 },
                 {
                   title: 'Post Date',
@@ -178,71 +168,47 @@ const AnnouncementListView = () => {
                 },
                 {
                   title: 'Tags',
-                  field: 'tags',
                   render: (rowData) =>
                     rowData.tags.map((r, index) => {
-                      return <Chip key={index} label={r.slug} />;
-                    }),
-                  editComponent: ({ rowData }) => {
-                    let data = rowData.tags.map((r) => ({ title: r.slug.split('-').join(' ') }));
-                    return <Tags name="Tags" service={getTagsAutocomplete} ref={tagRef} value={data} />;
-                  }
+                      return <Chip icon={<TagIcon />} key={index} label={r.slug} size="small" style={{ margin: 2 }} />;
+                    })
                 },
                 {
                   title: 'Synonyms',
-                  field: 'synonyms',
                   render: (rowData) =>
                     rowData.synonyms.map((r, index) => {
-                      return <Chip key={index} label={r.slug} />;
-                    }),
-                  editComponent: ({ rowData }) => {
-                    let data = rowData.synonyms.map((r) => ({ title: r.slug.split('-').join(' ') }));
-                    return <Synonyms name="Synonyms" service={getSynonymsAutocomplete} ref={synonymRef} value={data} />;
-                  }
-                },
+                      return <Chip icon={<TagsIcon />} key={index} label={r.slug} size="small" style={{ margin: 2 }} />;
+                    })
+                }
+              ]}
+              data={fetchAllAnnouncementsByUser}
+              detailPanel={[
                 {
-                  title: 'Resource',
-                  field: 'resources',
-                  render: (rowData) =>
-                    rowData.resources.map((r, index) => {
-                      return <Chip key={index} label={r.slug} />;
-                    }),
-                  editComponent: ({ rowData }) => {
-                    let data = rowData.resources.map((r) => ({ title: r.slug.split('-').join(' '), url: r.url }));
+                  icon: 'description',
+                  tooltip: 'Show Resource',
+                  render: (rowData) => {
                     return (
-                      <Resources name="Resources" service={getResourceAutocomplete} ref={resourceRef} value={data} />
+                      <div className={classes.resources}>
+                        <h3>Resources</h3>
+                        <ul>
+                          {rowData.resources.map((item, index) => (
+                            <div key={index}>
+                              <span>{index + 1}</span>
+                              <span className="col">{item.name}</span>
+                              <span className="col">{item.url}</span>
+                            </div>
+                          ))}
+                        </ul>
+                      </div>
                     );
                   }
                 }
               ]}
-              data={fetchAllAnnouncementsByUser}
-              // detailPanel={[
-              //   {
-              //     icon: 'description',
-              //     tooltip: 'Show Resource',
-              //     render: (rowData) => {
-              //       return (
-              //         <div className={classes.resources}>
-              //           <h3>Resources</h3>
-              //           <ul>
-              //             {rowData.resources.map((item, index) => (
-              //               <div key={index}>
-              //                 <span>{index + 1}</span>
-              //                 <span className="col">{item.slug}</span>
-              //                 <span className="col">{item.url}</span>
-              //               </div>
-              //             ))}
-              //           </ul>
-              //         </div>
-              //       );
-              //     }
-              //   }
-              // ]}
               // onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
               options={{
                 actionsColumnIndex: -1,
                 search: false,
-                filtering: false,
+                filtering: true,
                 paging: true,
                 pageSize: 5,
                 pageSizeOptions: [5, 10, 20],
@@ -262,40 +228,36 @@ const AnnouncementListView = () => {
                   color: theme.palette.text.primary
                 })
               }}
-              // actions={[
-              //   {
-              //     // custom action for update in new tab
-              //     icon: 'create',
-              //     tooltip: 'Update Announcement',
-              //     onClick: (event, rowData) => {
-              //       const { id, title, message, postdate, status, tags, resources } = rowData;
-              //       navigate(
-              //         `/app/announcements/update/${id}`,
-              //         {
-              //           state: {
-              //             announObj: {
-              //               title,
-              //               message,
-              //               postdate,
-              //               status,
-              //               tags,
-              //               resources
-              //             }
-              //           }
-              //         },
-              //         { replace: true }
-              //       );
-              //     }
-              //   },
-              //   {
-              //     // overrides in-built add action in material table
-              //     icon: 'add',
-              //     tooltip: 'Add Announcement',
-              //     position: 'toolbar',
-              //     isFreeAction: true,
-              //     onClick: () => setStage(STAGE.CREATE)
-              //   }
-              // ]}
+              actions={[
+                {
+                  // custom action for update in new tab
+                  icon: 'create',
+                  tooltip: 'Update Announcement',
+                  onClick: (event, rowData) => {
+                    const { id, title, message, postdate, status, tags, resources, synonyms } = rowData;
+                    navigate(`/announcements/update/${id}`, {
+                      state: {
+                        id,
+                        title,
+                        message,
+                        tags,
+                        resources,
+                        synonyms,
+                        status,
+                        postdate
+                      }
+                    });
+                  }
+                },
+                {
+                  icon: 'create',
+                  tooltip: 'Add Announcement',
+                  isFreeAction: true,
+                  onClick: (event, rowData) => {
+                    navigate(`/announcements/add`);
+                  }
+                }
+              ]}
             />
           </MuiThemeProvider>
         </Box>

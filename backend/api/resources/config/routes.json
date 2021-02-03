@@ -2,7 +2,7 @@
   "routes": [
     {
       "method": "GET",
-      "path": "/resources/find/:slug",
+      "path": "/resources/find/:name",
       "handler": "resources.autocomplete",
       "config": {
         "policies": []

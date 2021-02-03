@@ -2,7 +2,7 @@ import http from './httpService';
 
 const apiEndpoint = '/resources';
 
-export function getAllResources({ pageSize = 20, page = 1 } = {}) {
+export function getAllResources({ pageSize = 20, page = 0 } = {}) {
   return http.get(`${apiEndpoint}?pageSize=${pageSize}&page=${page}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
   });

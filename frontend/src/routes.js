@@ -36,7 +36,7 @@ const routes = [
     element: <DashboardLayout />,
     children: [
       { path: 'account', element: <AccountView /> },
-      { path: 'add-subscriptions/:id', element: <SubscriptionForm /> },
+      { path: 'subscriptions/add', element: <SubscriptionForm /> },
       { path: 'subscriptions', element: <Subscriptions /> },
       { path: 'synonyms', element: <Synomyms /> },
       { path: 'add-synonyms/:id', element: <SynonymForm /> },

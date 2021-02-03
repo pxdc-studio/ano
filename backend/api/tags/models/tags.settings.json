@@ -17,8 +17,15 @@
       "required": true
     },
     "author": {
-      "plugin": "admin",
+      "plugin": "users-permissions",
       "model": "user"
+    },
+    "view": {
+      "type": "biginteger"
+    },
+    "name": {
+      "type": "string",
+      "required": true
     }
   }
 }

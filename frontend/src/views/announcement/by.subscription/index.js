@@ -11,6 +11,9 @@ import { toast } from 'react-toastify';
 import { Label, Explicit } from '@material-ui/icons';
 import { ModalAddAnnouncement } from '../form.crud';
 import { StageContext } from '../context';
+import FaceIcon from '@material-ui/icons/Face';
+import TagIcon from '@material-ui/icons/Bookmark';
+import TagsIcon from '@material-ui/icons/Bookmarks';
 /**
  * path: /app/announcements
  *      description: announcements CRUD
@@ -110,32 +113,62 @@ function AnnouncementView() {
   const theme = useTheme();
   const classes = useStyles();
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(5);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    async function fetchAnnouncements() {
-      try {
-        const { status, data } = await getAllAnnouncements({ pageSize, page });
-        if (status === 200) {
-          setAnnouncements(data.data);
-          setLoader(false);
-        }
-      } catch (ex) {
-        toast.error(ex.response.data.message);
-        setAnnouncements([]);
+  async function fetchAnnouncements(query) {
+    try {
+      let { status, data } = await getAllAnnouncements({
+        pageSize: query.pageSize,
+        page: query.page
+      });
+
+      if (status == 200) {
+        data.data = data.data.map((item) => {
+          item.synonyms = item.synonyms.map((syn) => {
+            syn.tags = syn.tags.map((tag) => tag.tag);
+            return syn;
+          }); // this is due to sql return nesting object,
+          return item;
+        });
+
         setLoader(false);
+        return data;
       }
+    } catch (ex) {
+      toast.error(ex.response.data.message);
+      setLoader(false);
     }
-    fetchAnnouncements();
-  }, [pageSize, page]);
+  }
+  // useEffect(() => {
+  //   async function fetchAnnouncements() {
+  //     try {
+  //       const { status, data } = await getAllAnnouncements({ pageSize, page });
+  //       if (status === 200) {
+  //         setAnnouncements(data.data);
+  //         setLoader(false);
+  //       }
+  //     } catch (ex) {
+  //       toast.error(ex.response.data.message);
+  //       setAnnouncements([]);
+  //       setLoader(false);
+  //     }
+  //   }
+  //   fetchAnnouncements();
+  // }, [pageSize, page]);
 
   return useMemo(() => {
     const COLUMNS = [
       { title: 'Title', field: 'title' },
       {
         title: 'Author',
-        field: 'author.fullname',
-        editable: 'never'
+        field: 'author.username',
+        editable: 'never',
+        render: (rowData) => {
+          return (
+            <Chip icon={<FaceIcon />} size="small" label={rowData.author.username} clickable style={{ margin: 2 }} />
+          );
+        }
       },
       {
         title: 'Post Date',
@@ -144,17 +177,19 @@ function AnnouncementView() {
         editable: 'never'
       },
       {
-        title: 'Tags & Synonyms',
+        title: 'Tags',
         render: (rowData) => {
           return rowData.tags.map((item, index) => (
-            <Chip
-              key={index}
-              size="small"
-              label={item.slug.split('-').join(' ')}
-              clickable
-              color="primary"
-              style={{ margin: '4px' }}
-            />
+            <Chip icon={<TagIcon />} key={index} size="small" label={item.name} clickable style={{ margin: 2 }} />
+          ));
+        },
+        editable: 'never'
+      },
+      {
+        title: 'Synnonyms',
+        render: (rowData) => {
+          return rowData.synonyms.map((item, index) => (
+            <Chip icon={<TagsIcon />} key={index} size="small" label={item.name} clickable style={{ margin: 2 }} />
           ));
         },
         editable: 'never'
@@ -164,7 +199,7 @@ function AnnouncementView() {
     const OPTIONS = {
       actionsColumnIndex: -1,
       search: false,
-      filtering: false,
+      filtering: true,
       paging: true,
       pageSize: pageSize,
       pageSizeOptions: [5, 10, 20, 50, 100],
@@ -189,16 +224,11 @@ function AnnouncementView() {
           <MaterialTable
             title="Timeline"
             isLoading={loader}
-            data={announcements}
+            data={fetchAnnouncements}
             // eslint-disable-next-line
             onRowClick={(evt, _selectedRow) => setSelectedRow(_selectedRow.tableData.id)}
             columns={COLUMNS}
             options={OPTIONS}
-            onChangePage={(e) => {}}
-            onChangeRowsPerPage={(e) => {
-              setPage(1);
-              setPageSize(e);
-            }}
             detailPanel={[
               {
                 icon: 'description',
@@ -218,6 +248,16 @@ function AnnouncementView() {
                       </ul>
                     </div>
                   );
+                }
+              }
+            ]}
+            actions={[
+              {
+                icon: 'create',
+                tooltip: 'Add Announcement',
+                isFreeAction: true,
+                onClick: (event, rowData) => {
+                  navigate(`/announcements/add`);
                 }
               }
             ]}

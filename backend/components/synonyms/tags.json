@@ -1,8 +1,8 @@
 {
-  "collectionName": "components_subscriptions_tags",
+  "collectionName": "components_synonyms_tags",
   "info": {
-    "name": "tags",
-    "icon": "align-justify",
+    "name": "Tags",
+    "icon": "anchor",
     "description": ""
   },
   "options": {},

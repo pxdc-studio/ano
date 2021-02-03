@@ -10,7 +10,9 @@ import {
   Avatar,
   Popover,
   Typography,
-  CircularProgress
+  CircularProgress,
+  Grid,
+  useTheme
 } from '@material-ui/core';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Page from 'src/components/Page';
@@ -24,9 +26,23 @@ import AddIcon from '@material-ui/icons/Add';
 import { getAuthorsAutocomplete } from 'src/services/authorService';
 import { getTagsAutocomplete } from 'src/services/tagsServices';
 import { getSynonymsAutocomplete } from 'src/services/synonymsService';
-import { postSubscription, getAllSubscriptions } from 'src/services/subscriptionService';
-import { Authors } from './author.autocomplete';
+import MaterialTable from 'material-table';
+import FaceIcon from '@material-ui/icons/Face';
+import TagIcon from '@material-ui/icons/Bookmark';
+import TagsIcon from '@material-ui/icons/Bookmarks';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+import { AutocompleteByTag } from './tags.autocomplete';
+import { AutocompleteByAuthor } from './authors.autocomplete';
+import { AutocompleteBySynonym } from './synonym.autocomplete';
 
+import {
+  getAllSubscriptions,
+  putSubscription,
+  postSubscription,
+  deleteSubscription
+} from 'src/services/subscriptionService';
 /**
  * path: /app/subscriptions
  *      description: subscriptions CRUD
@@ -81,50 +97,35 @@ export default function () {
   const [synonyms, setSynonyms] = useState([]);
 
   const [loader, setLoader] = useState(false);
-  const [selected, setSelected] = useState(null);
   // eslint-disable-next-line no-unused-vars
-
-  const popupState = usePopupState({
-    variant: 'popper',
-    popupId: 'sub-popover'
-  });
 
   const tagRef = useRef();
   const authorRef = useRef();
   const synonymRef = useRef();
+  const theme = useTheme();
+  let navigate = useNavigate();
 
-  function onSingleTagUpdate(value) {
-    const tag = tags.find((tag) => {
-      if (tag.tag) return tag.tag.id == value.id;
-      else return tag.id == value.id;
-    });
-    tag.exclude_authors = value.exclude_authors;
-    setTags(tags);
+  async function fetchAllSubscriptions() {
+    try {
+      const { status, data } = await getAllSubscriptions();
+      return data;
+    } catch (ex) {
+      toast.error(ex.response.data.message);
+      setLoader(false);
+    }
   }
 
-  function onEveryTagsUpdate(value) {
-    setTags(value);
-  }
-
-  useEffect(() => {
-    async function fetchAllSubscriptions() {
-      try {
-        const { status, data } = await getAllSubscriptions();
-        if (status === 200) {
-          //due to sql response, id is normalized to tag_id, not joined id
-          setTags(data.tags.map((item) => ({ ...item, id: item.tag.id })));
-          setSynonyms(data.synonyms.map((item) => ({ ...item, id: item.synonym.id })));
-          setAuthors(data.authors.map((item) => ({ ...item, id: item.author.id })));
-          setLoader(false);
-        }
-      } catch (ex) {
-        toast.error(ex.response.data.message);
-        setLoader(false);
+  const ACTIONS = [
+    {
+      icon: 'add',
+      tooltip: 'Add Subscriptions',
+      position: 'toolbar',
+      isFreeAction: true,
+      onClick: () => {
+        navigate('/subscriptions/add');
       }
     }
-
-    fetchAllSubscriptions();
-  }, []);
+  ];
 
   async function _handleSubmit(e) {
     setLoader(true);
@@ -134,7 +135,53 @@ export default function () {
       authors: authorRef.current.value,
       synonyms: synonymRef.current.value
     });
+
     setLoader(false);
+  }
+
+  async function handleDeleteResource({ id }) {
+    try {
+      const { data } = await deleteSubscription(id);
+      let { status, message } = data;
+
+      if (status === 200) {
+        toast.success(message);
+        return true;
+      }
+      toast.error(message);
+    } catch (er) {
+      toast.error('Server Error');
+    }
+  }
+
+  async function handleUpdateResource(values) {
+    try {
+      let { data } = await putSubscription(values);
+      let { status, message } = data;
+
+      if (status === 200) {
+        toast.success(message);
+        return true;
+      }
+      toast.error(message);
+    } catch (er) {
+      toast.error('Server Error');
+    }
+  }
+
+  async function handleAddResource(values) {
+    try {
+      let { data } = await postSubscription(values);
+      let { status, message } = data;
+
+      if (status === 200) {
+        toast.success(message);
+        return true;
+      }
+      toast.error(message);
+    } catch (er) {
+      toast.error('Server Error');
+    }
   }
 
   return (
@@ -142,476 +189,198 @@ export default function () {
       <Container maxWidth={false}>
         <Box mt={3}>
           <MuiThemeProvider theme={themeTable}>
-            <Formik onSubmit={_handleSubmit} initialValues={{}}>
-              {function Form({ errors, handleBlur, handleChange, handleSubmit }) {
-                return (
-                  <>
-                    <form onSubmit={handleSubmit}>
-                      <Box mb={3}>
-                        <Typography color="textPrimary" variant="h2">
-                          Subscription
-                        </Typography>
-                      </Box>
-
-                      <br />
-
-                      <TagsBox
-                        name="Tags"
-                        service={getTagsAutocomplete}
-                        ref={tagRef}
-                        value={tags}
-                        popupState={popupState}
-                        onSelect={(option) => setSelected(option)}
-                        onEveryTagsUpdate={onEveryTagsUpdate}
-                      />
-                      <br />
-
-                      <SynonymsBox
-                        name="Synonyms"
-                        service={getSynonymsAutocomplete}
-                        ref={synonymRef}
-                        value={synonyms}
-                      />
-
-                      <br />
-                      <AuthorsBox name="Authors" service={getAuthorsAutocomplete} ref={authorRef} value={authors} />
-                      <Box my={4}>
-                        <Button
-                          color="primary"
-                          disabled={loader}
-                          fullWidth
-                          size="large"
-                          type="submit"
-                          variant="contained"
-                          startIcon={<AddIcon />}
-                        >
-                          Update
-                        </Button>
-                      </Box>
-                    </form>
-                  </>
-                );
+            <MaterialTable
+              title="My Subcriptions"
+              isLoading={loader}
+              // actions={ACTIONS}
+              editable={{
+                onRowAdd: handleAddResource,
+                onRowUpdate: handleUpdateResource,
+                onRowDelete: handleDeleteResource
               }}
-            </Formik>
+              columns={[
+                {
+                  title: 'Includes',
+                  field: 'includes',
+                  render: (rowData) =>
+                    rowData.includes.map((r, index) => {
+                      if (!r?.tag && !r?.author && !r?.synonym) return;
+                      if (r.__component == 'subscriptions.tags') {
+                        return (
+                          <Chip icon={<TagIcon />} key={index} label={r.tag.name} size="small" style={{ margin: 2 }} />
+                        );
+                      }
+
+                      if (r.__component == 'subscriptions.synonyms') {
+                        return (
+                          <Chip
+                            icon={<TagsIcon />}
+                            key={index}
+                            label={r.synonym.name}
+                            size="small"
+                            style={{ margin: 2 }}
+                          />
+                        );
+                      }
+
+                      if (r.__component == 'subscriptions.authors') {
+                        return (
+                          <Chip
+                            icon={<FaceIcon />}
+                            key={index}
+                            label={r.author.username}
+                            size="small"
+                            style={{ margin: 2 }}
+                          />
+                        );
+                      }
+                    }),
+                  editComponent: (props) => {
+                    return <EditBox {...props} name="Includes" rowData={props} hash="includes" />;
+                  }
+                },
+                {
+                  title: 'Excludes',
+                  field: 'excludes',
+                  render: (rowData) =>
+                    rowData.excludes.map((r, index) => {
+                      if (!r?.tag && !r?.author && !r?.synonym) return;
+                      if (r.__component == 'subscriptions.tags') {
+                        return (
+                          <Chip icon={<TagIcon />} key={index} label={r.tag.name} size="small" style={{ margin: 2 }} />
+                        );
+                      }
+
+                      if (r.__component == 'subscriptions.synonyms') {
+                        return (
+                          <Chip
+                            icon={<TagsIcon />}
+                            key={index}
+                            label={r.synonym.name}
+                            size="small"
+                            style={{ margin: 2 }}
+                          />
+                        );
+                      }
+
+                      if (r.__component == 'subscriptions.authors') {
+                        return (
+                          <Chip
+                            icon={<FaceIcon />}
+                            key={index}
+                            label={r.author.username}
+                            size="small"
+                            style={{ margin: 2 }}
+                          />
+                        );
+                      }
+                    }),
+                  editComponent: (props) => {
+                    return <EditBox {...props} name="Excludes" rowData={props} hash="excludes" />;
+                  }
+                },
+                {
+                  title: 'Digest',
+                  field: 'digest',
+                  lookup: { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' },
+                  initialEditValue: 'daily'
+                }
+              ]}
+              data={fetchAllSubscriptions}
+              options={{
+                addRowPosition: 'first',
+                actionsColumnIndex: -1,
+                search: false,
+                filtering: true,
+                paging: true,
+                pageSize: 5,
+                pageSizeOptions: [5, 10, 20],
+                headerStyle: {
+                  backgroundColor: theme.palette.primary.main,
+                  color: '#FFF',
+                  '&:hover': {
+                    color: '#FFF'
+                  }
+                }
+              }}
+            />
           </MuiThemeProvider>
         </Box>
-        <Popover
-          {...bindPopover(popupState)}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'center'
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'center'
-          }}
-        >
-          <Box p={2} minWidth={320}>
-            <Authors
-              name="Excluded Authors"
-              service={getAuthorsAutocomplete}
-              ref={authorRef}
-              data={selected}
-              onChange={onSingleTagUpdate}
-            />
+        <Typography component="div" style={{ marginTop: 16 }}>
+          <h5>Types of Subcriptions</h5>
+          <Box p={1}>
+            <Chip icon={<FaceIcon />} label="Author" size="small" style={{ margin: 2 }} />
+            <Chip icon={<TagIcon />} label="Tag" size="small" style={{ margin: 2 }} />
+            <Chip icon={<TagsIcon />} label="Synonym" size="small" style={{ margin: 2 }} />
           </Box>
-        </Popover>
+        </Typography>
       </Container>
     </Page>
   );
 }
 
-const filter = createFilterOptions();
-
-export const TagsBox = forwardRef(
-  (
-    {
-      name,
-      service = () => {},
-      value: _value,
-      options: _options,
-      popupState,
-      onSelect = () => {},
-      onEveryTagsUpdate = () => {}
-    },
-    parentRef
-  ) => {
-    let [value, setValue] = useState(_value || []);
-    let [options, setOptions] = useState(_options || []);
-    const [selected, setSelected] = useState(null);
-    const [stage, setSTAGE] = useState(STAGE.READY);
-
-    useImperativeHandle(parentRef, () => ({
-      value
-    }));
-
-    useEffect(() => {
-      if ((_value != null || (_value && _value.length < 1)) && _value != value) {
-        let mapped = _value.map((tag) => ({
-          title: tag.tag.slug,
-          exclude_authors: tag.exclude_authors,
-          id: tag.tag.id
-        }));
-        setValue(mapped);
-      }
-    }, [_value]);
-
-    useEffect(() => {
-      if ((_options != null || (_options && _options.length < 1)) && _options != options) {
-        let mapped = _value.map((tag) => ({
-          title: tag.tag.slug,
-          exclude_authors: tag.exclude_authors,
-          id: tag.tag.id
-        }));
-        setOptions(mapped);
-      }
-    }, [_options]);
-
-    async function autoComplete(input) {
-      if (input.trim().length == 0) {
-        setOptions([]);
-        return;
-      }
-
-      setSTAGE(STAGE.LOADING);
-
-      let { data } = await service(input);
-      if (data && data.length > 0) {
-        const formated_data_array = data.map((tag) => ({
-          title: tag.slug.split('-').join(' '),
-          id: tag.id
-        }));
-        setOptions(formated_data_array);
-      }
-      setSTAGE(STAGE.READY);
+function EditBox({ name, rowData, hash }) {
+  function onTagChange(values) {
+    if (!rowData.rowData[hash]) {
+      rowData.rowData[hash] = [];
     }
-
-    function evtInputChange(event, values) {
-      setValue(values);
-      onEveryTagsUpdate(values);
-    }
-
-    return useMemo(() => {
-      function Input(params) {
-        return (
-          <TextField
-            {...params}
-            onChange={(e) => autoComplete(e.target.value)}
-            label={name}
-            variant="outlined"
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              )
-            }}
-          />
-        );
-      }
-
-      function evtFilterChange(options, params) {
-        return filter(options, params);
-      }
-
-      return (
-        <>
-          <Autocomplete
-            value={value}
-            options={options}
-            multiple
-            getOptionLabel={(option) => option.title}
-            filterSelectedOptions
-            fullWidth
-            loading={stage == STAGE.LOADING ? true : false}
-            noOptionsText="> Enter to autocomplete tags"
-            onChange={evtInputChange}
-            renderInput={Input}
-            filterOptions={evtFilterChange}
-            getOptionSelected={(v, n) => {
-              if (v.inputValue != null) return false;
-              return n.title == v.title ? true : false;
-            }}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => {
-                return (
-                  <Chip
-                    data-index={index}
-                    size="small"
-                    // avatar={<Avatar>M</Avatar>}
-                    label={option.title}
-                    style={{
-                      background: option.exclude_authors && option.exclude_authors.length > 0 ? 'crimson' : '#eee'
-                    }}
-                    {...getTagProps({ index })}
-                    onClick={(e) => {
-                      onSelect(option);
-                      popupState.close();
-                      popupState.open(e.target);
-                    }}
-                  />
-                );
-              })
-            }
-          />
-        </>
-      );
-    }, [_options, stage, value]);
+    let row = rowData.rowData[hash].filter((item) => item.__component != 'subscriptions.tags');
+    row = row.concat(values.map((data) => ({ __component: 'subscriptions.tags', tag: data })));
+    rowData.onRowDataChange({
+      ...rowData.rowData,
+      [hash]: row
+    });
   }
-);
 
-export const SynonymsBox = forwardRef(
-  (
-    { name, service = () => {}, value: _value, options: _options, onSelect = () => {}, onEveryTagsUpdate = () => {} },
-    parentRef
-  ) => {
-    let [value, setValue] = useState(_value || []);
-    let [options, setOptions] = useState(_options || []);
-    const [selected, setSelected] = useState(null);
-    const [stage, setSTAGE] = useState(STAGE.READY);
-
-    useImperativeHandle(parentRef, () => ({
-      value
-    }));
-
-    useEffect(() => {
-      if ((_value != null || (_value && _value.length < 1)) && _value != value) {
-        let mapped = _value.map((data) => ({
-          title: data.synonym.slug,
-          exclude_authors: data.exclude_authors,
-          id: data.synonym.id
-        }));
-        setValue(mapped);
-      }
-    }, [_value]);
-
-    useEffect(() => {
-      if ((_options != null || (_options && _options.length < 1)) && _options != options) {
-        let mapped = _value.map((synonym) => ({
-          title: synonym.synonym.slug,
-          exclude_authors: synonym.exclude_authors,
-          id: data.synonym.id
-        }));
-        setOptions(mapped);
-      }
-    }, [_options]);
-
-    async function autoComplete(input) {
-      if (input.trim().length == 0) {
-        setOptions([]);
-        return;
-      }
-
-      setSTAGE(STAGE.LOADING);
-
-      let { data } = await service(input);
-      if (data && data.length > 0) {
-        const formated_data_array = data.map((data) => ({ title: data.slug.split('-').join(' '), id: data.id }));
-        setOptions(formated_data_array);
-      }
-      setSTAGE(STAGE.READY);
+  function onAuthorChange(values) {
+    if (!rowData.rowData[hash]) {
+      rowData.rowData[hash] = [];
     }
-
-    function evtInputChange(event, values) {
-      setValue(values);
-      onEveryTagsUpdate(values);
-    }
-
-    return useMemo(() => {
-      function Input(params) {
-        return (
-          <TextField
-            {...params}
-            onChange={(e) => autoComplete(e.target.value)}
-            label={name}
-            variant="outlined"
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              )
-            }}
-          />
-        );
-      }
-
-      function evtFilterChange(options, params) {
-        return filter(options, params);
-      }
-
-      return (
-        <>
-          <Autocomplete
-            value={value}
-            options={options}
-            multiple
-            getOptionLabel={(option) => option.title}
-            filterSelectedOptions
-            fullWidth
-            loading={stage == STAGE.LOADING ? true : false}
-            noOptionsText="> Enter to autocomplete tags"
-            onChange={evtInputChange}
-            renderInput={Input}
-            filterOptions={evtFilterChange}
-            getOptionSelected={(v, n) => {
-              if (v.inputValue != null) return false;
-              return n.title == v.title ? true : false;
-            }}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => {
-                return (
-                  <Chip
-                    data-index={index}
-                    size="small"
-                    // avatar={<Avatar>M</Avatar>}
-                    label={option.title}
-                    style={{
-                      background: option.exclude_authors && option.exclude_authors.length > 0 ? 'crimson' : '#eee'
-                    }}
-                    {...getTagProps({ index })}
-                  />
-                );
-              })
-            }
-          />
-        </>
-      );
-    }, [_options, stage, value]);
+    let row = rowData.rowData[hash].filter((item) => item.__component != 'subscriptions.authors');
+    row = row.concat(values.map((data) => ({ __component: 'subscriptions.authors', author: data })));
+    rowData.onRowDataChange({
+      ...rowData.rowData,
+      [hash]: row
+    });
   }
-);
 
-export const AuthorsBox = forwardRef(
-  (
-    { name, service = () => {}, value: _value, options: _options, onSelect = () => {}, onEveryTagsUpdate = () => {} },
-    parentRef
-  ) => {
-    let [value, setValue] = useState(_value || []);
-    let [options, setOptions] = useState(_options || []);
-    const [selected, setSelected] = useState(null);
-    const [stage, setSTAGE] = useState(STAGE.READY);
-    useImperativeHandle(parentRef, () => ({
-      value
-    }));
-
-    useEffect(() => {
-      if ((_value != null || (_value && _value.length < 1)) && _value != value) {
-        let mapped = _value.map((data) => ({
-          username: data.author.username,
-          title: data.author.username,
-          exclude_tags: data.exclude_tags,
-          id: data.author.id
-        }));
-        setValue(mapped);
-      }
-    }, [_value]);
-
-    useEffect(() => {
-      if ((_options != null || (_options && _options.length < 1)) && _options != options) {
-        let mapped = _value.map((data) => ({
-          username: data.author.username,
-          title: data.author.username,
-          exclude_tags: data.exclude_tags,
-          id: data.author.id
-        }));
-        setOptions(mapped);
-      }
-    }, [_options]);
-
-    async function autoComplete(input) {
-      if (input.trim().length == 0) {
-        setOptions([]);
-        return;
-      }
-
-      setSTAGE(STAGE.LOADING);
-
-      let { data } = await service(input);
-      if (data && data.length > 0) {
-        data = data.map((d) => {
-          d.title = d.username;
-          return d;
-        });
-        setOptions(data);
-      }
-      setSTAGE(STAGE.READY);
+  function onSynonymChange(values) {
+    if (!rowData.rowData[hash]) {
+      rowData.rowData[hash] = [];
     }
-
-    function evtInputChange(event, values) {
-      setValue(values);
-      onEveryTagsUpdate(values);
-    }
-
-    return useMemo(() => {
-      function Input(params) {
-        return (
-          <TextField
-            {...params}
-            onChange={(e) => autoComplete(e.target.value)}
-            label={name}
-            variant="outlined"
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {stage == STAGE.LOADING ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              )
-            }}
-          />
-        );
-      }
-
-      function evtFilterChange(options, params) {
-        return filter(options, params);
-      }
-
-      return (
-        <>
-          <Autocomplete
-            value={value}
-            options={options}
-            multiple
-            getOptionLabel={(option) => option.username}
-            filterSelectedOptions
-            fullWidth
-            loading={stage == STAGE.LOADING ? true : false}
-            noOptionsText="> Enter to autocomplete tags"
-            onChange={evtInputChange}
-            renderInput={Input}
-            filterOptions={evtFilterChange}
-            getOptionSelected={(v, n) => {
-              if (v.inputValue != null) return false;
-              return n.title == v.title ? true : false;
-            }}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => {
-                return (
-                  <Chip
-                    data-index={index}
-                    size="small"
-                    avatar={
-                      <Avatar>
-                        <>{option.title && option.title.substring(0, 1).toUpperCase()}</>
-                      </Avatar>
-                    }
-                    label={option.title}
-                    style={{
-                      background: option.exclude_authors && option.exclude_authors.length > 0 ? 'crimson' : '#eee'
-                    }}
-                    {...getTagProps({ index })}
-                  />
-                );
-              })
-            }
-          />
-        </>
-      );
-    }, [_options, stage, value]);
+    let row = rowData.rowData[hash].filter((item) => item.__component != 'subscriptions.synonyms');
+    row = row.concat(values.map((data) => ({ __component: 'subscriptions.synonyms', synonym: data })));
+    rowData.onRowDataChange({
+      ...rowData.rowData,
+      [hash]: row
+    });
   }
-);
+
+  let tags, authors, synonyms;
+
+  if (rowData && rowData.rowData[hash]) {
+    tags = rowData.rowData[hash].filter((item) => item.__component == 'subscriptions.tags').map((item) => item.tag);
+    authors = rowData?.rowData[hash]
+      .filter((item) => item.__component == 'subscriptions.authors')
+      .map((item) => item.author);
+    synonyms = rowData?.rowData[hash]
+      .filter((item) => item.__component == 'subscriptions.synonyms')
+      .map((item) => item.synonym);
+  }
+
+  return (
+    <Box p={2}>
+      <h4>{name}</h4>
+      <Box mt={2}>
+        <AutocompleteByTag onChange={onTagChange} value={tags} creatable={false} />
+      </Box>
+      <Box mt={2}>
+        <AutocompleteByAuthor onChange={onAuthorChange} value={authors} />
+      </Box>
+      <Box mt={2}>
+        <AutocompleteBySynonym onChange={onSynonymChange} value={synonyms} />
+      </Box>
+    </Box>
+  );
+  // return <AutocompleteByName />;
+}

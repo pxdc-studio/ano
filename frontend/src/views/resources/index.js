@@ -201,25 +201,46 @@ export default () => {
 
   // Resources remove function
   const handleDeleteResource = async ({ id }) => {
-    const { status } = await deleteResource(id);
-    if (status === 200) {
-      return true;
+    try {
+      const { data } = await deleteResource(id);
+      let { status, message } = data;
+
+      if (status === 200) {
+        toast.success(message);
+        return true;
+      }
+      toast.error(message);
+    } catch (er) {
+      toast.error('Server Error');
     }
-    return false;
   };
 
   const handleUpdateResource = async (newData, oldData) => {
-    const { status } = await putResource(newData);
-    if (status === 200) {
-      return newData;
+    try {
+      const { data } = await putResource(newData);
+      let { status, message } = data;
+      if (status === 200) {
+        toast.success(message);
+        return newData;
+      }
+      toast.error(message);
+    } catch (er) {
+      toast.error('Server Error');
     }
   };
 
   const handleAddResource = async (newData, oldData) => {
-    const { status, data } = await postResource({ resources: [newData] });
-    if (status === 200 && data.length > 0) {
-      newData.id = data[0];
-      return newData;
+    try {
+      const { data } = await postResource(newData);
+      let { status, message } = data;
+      if (status === 200) {
+        toast.success(message);
+        return newData;
+      } else {
+        toast.error(message);
+      }
+    } catch (er) {
+      toast.error('Server Error');
     }
   };
 
@@ -227,7 +248,6 @@ export default () => {
     return (
       <Page className={classes.root} title="Resources">
         <Container maxWidth={false}>
-          {/* <PopupModal show={stage == STAGE.CREATE} /> */}
           <Box mt={3}>
             <MuiThemeProvider theme={themeTable}>
               <MaterialTable
@@ -237,9 +257,9 @@ export default () => {
                 columns={[
                   {
                     title: 'Name',
-                    field: 'slug',
-                    render: (dataRow) => dataRow.slug.split('-').join(' '),
-                    validate: (rowData) => rowData.slug != null && rowData.slug.length > 0
+                    field: 'name',
+                    render: (dataRow) => dataRow.name,
+                    validate: (rowData) => rowData.name != null && rowData.name.length > 0
                   },
                   { title: 'Url', field: 'url', validate: (rowData) => rowData.url != null && rowData.url.length > 0 }
                 ]}
@@ -252,9 +272,10 @@ export default () => {
                 // eslint-disable-next-line
                 onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
                 options={{
+                  addRowPosition: 'first',
                   actionsColumnIndex: -1,
                   search: false,
-                  filtering: false,
+                  filtering: true,
                   paging: true,
                   pageSize: 5,
                   pageSizeOptions: [5, 10, 20],

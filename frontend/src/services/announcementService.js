@@ -9,14 +9,14 @@ const apiEndpoint = '/announcements';
  */
 
 // hits api/announcements/
-export function getAllAnnouncements({ pageSize = 20, page = 1 } = {}) {
+export function getAllAnnouncements({ pageSize = 20, page = 0 } = {}) {
   return http.get(`${apiEndpoint}?pageSize=${pageSize}&page=${page}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
   });
 }
 
 // hits api/announcements/me
-export function getAllAnnouncementsByUser({ pageSize = 5, page = 1 } = {}) {
+export function getAllAnnouncementsByUser({ pageSize = 5, page = 0 } = {}) {
   return http.get(`${apiEndpoint}/me?pageSize=${pageSize}&page=${page}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
   });

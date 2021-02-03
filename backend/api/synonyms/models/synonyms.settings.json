@@ -2,7 +2,7 @@
   "kind": "collectionType",
   "collectionName": "synonyms",
   "info": {
-    "name": "synonyms",
+    "name": "Synonyms",
     "description": ""
   },
   "options": {
@@ -11,17 +11,23 @@
     "draftAndPublish": false
   },
   "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
     "slug": {
       "type": "string",
       "required": true,
       "unique": true
     },
+    "tags": {
+      "type": "component",
+      "repeatable": true,
+      "component": "synonyms.tags"
+    },
     "author": {
       "plugin": "users-permissions",
       "model": "user"
-    },
-    "tags": {
-      "collection": "tags"
     }
   }
 }

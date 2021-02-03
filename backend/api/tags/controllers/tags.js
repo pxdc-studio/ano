@@ -15,18 +15,11 @@ const slugify = require("slugify");
 
 module.exports = {
   async autocomplete(ctx) {
-    let { slug } = ctx.params;
-
-    slug = slug = slugify(slug, {
-      replacement: "-",
-      lower: true,
-      strict: true,
-    });
-
+    let { name } = ctx.params;
     let raw = await strapi
       .query("tags")
       .model.query((q) => {
-        q.where("tags.slug", "LIKE", `${slug}%`);
+        q.where("tags.name", "LIKE", `${name}%`);
         q.orderBy("created_at", "desc");
       })
       .fetchAll();
@@ -34,13 +27,14 @@ module.exports = {
     const result = raw.map((item) =>
       sanitizeEntity(item, { model: strapi.models.tags })
     );
+
     return result;
   },
   async find(ctx) {
     const user = ctx.state.user;
     const authorId = user ? user.id : -1; // none reachable user id
 
-    const { pageSize = 20, page = 1 } = ctx.query;
+    const { pageSize = 20, page = 0 } = ctx.query;
 
     let raw = await strapi
       .query("tags")
@@ -68,15 +62,35 @@ module.exports = {
   async create(ctx) {
     const user = ctx.state.user;
     const authorId = user ? user.id : -1; // none reachable user id
-
-    const { tags: input_tags } = ctx.request.body;
+    const { name } = ctx.request.body;
 
     try {
-      let data = await createTags(input_tags, authorId);
+      const slug = slugify(name, {
+        replacement: "-",
+        lower: true,
+        strict: true,
+      });
 
-      return { status: 200, data: data };
+      const exist = await strapi.query("tags").findOne({
+        slug: slug,
+      });
+
+      if (exist) {
+        return {
+          status: 304,
+          message: "Tag with the same name is already exist",
+        };
+      }
+
+      let result = await strapi.query("tags").create({
+        slug: slug,
+        name: name,
+        author: authorId,
+      });
+
+      return { status: 200, data: result, message: "Tag created successfull" };
     } catch (e) {
-      return { status: 400 };
+      return { status: 400, message: "Unknowned Error when create Tag" };
     }
   },
   async delete(ctx) {
@@ -91,7 +105,10 @@ module.exports = {
       });
 
       if (isInUse) {
-        return { status: 304 }; // inuse
+        return {
+          status: 304,
+          message: "Tag is already in use by Annoucements",
+        }; // inuse
       }
 
       await strapi
@@ -102,10 +119,10 @@ module.exports = {
         })
         .destroy();
 
-      return { status: 200 };
+      return { status: 200, message: "Tag Deleted Successfull" };
     } catch (e) {
       console.log(e);
-      return { status: 400 };
+      return { status: 400, message: "Unknown Error" };
     }
   },
   async update(ctx) {
@@ -113,31 +130,37 @@ module.exports = {
     const authorId = user ? user.id : -1; // none reachable user id
 
     const { id: tag_id } = ctx.params;
-    let { slug } = ctx.request.body;
+    let { name } = ctx.request.body;
 
     try {
-      slug = slugify(slug, {
+      const slug = slugify(name, {
         replacement: "-",
         lower: true,
         strict: true,
       });
 
-      await strapi
-        .query("tags")
-        .model.query((q) => {
-          q.where("tags.author", authorId);
-          q.andWhere("tags.id", tag_id);
-        })
-        .save(
-          {
-            slug,
-          },
-          { patch: true }
-        );
+      const exist = await strapi.query("tags").findOne({
+        author: authorId,
+        id: tag_id,
+      });
 
-      return { status: 200 };
+      if (!exist) {
+        return { status: 403, message: "Tag does not belong to You" };
+      }
+
+      await strapi.query("tags").update(
+        {
+          id: tag_id,
+        },
+        {
+          name: name,
+          slug: slug,
+        }
+      );
+
+      return { status: 200, message: "Tag Update Completed" };
     } catch (e) {
-      return { status: 400 };
+      return { status: 400, message: "Unknow Error Update Tag" };
     }
   },
 };

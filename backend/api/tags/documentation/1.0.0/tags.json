@@ -1,6 +1,6 @@
 {
   "paths": {
-    "/tags/find/{slug}": {
+    "/tags/find/{name}": {
       "get": {
         "deprecated": false,
         "description": "",
@@ -56,7 +56,7 @@
         ],
         "parameters": [
           {
-            "name": "slug",
+            "name": "name",
             "in": "path",
             "description": "",
             "deprecated": false,
@@ -585,7 +585,8 @@
       "Tags": {
         "required": [
           "id",
-          "slug"
+          "slug",
+          "name"
         ],
         "properties": {
           "id": {
@@ -597,16 +598,11 @@
           "author": {
             "required": [
               "id",
+              "username",
               "email"
             ],
             "properties": {
               "id": {
-                "type": "string"
-              },
-              "firstname": {
-                "type": "string"
-              },
-              "lastname": {
                 "type": "string"
               },
               "username": {
@@ -615,40 +611,62 @@
               "email": {
                 "type": "string"
               },
+              "provider": {
+                "type": "string"
+              },
               "password": {
                 "type": "string"
               },
               "resetPasswordToken": {
                 "type": "string"
               },
-              "registrationToken": {
+              "confirmationToken": {
                 "type": "string"
               },
-              "isActive": {
+              "confirmed": {
                 "type": "boolean"
-              },
-              "roles": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
               },
               "blocked": {
                 "type": "boolean"
+              },
+              "role": {
+                "type": "string"
+              },
+              "fullname": {
+                "type": "string"
+              },
+              "created_by": {
+                "type": "string"
+              },
+              "updated_by": {
+                "type": "string"
               }
             }
+          },
+          "view": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
           }
         }
       },
       "NewTags": {
         "required": [
-          "slug"
+          "slug",
+          "name"
         ],
         "properties": {
           "slug": {
             "type": "string"
           },
           "author": {
+            "type": "string"
+          },
+          "view": {
+            "type": "integer"
+          },
+          "name": {
             "type": "string"
           },
           "created_by": {

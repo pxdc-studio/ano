@@ -594,19 +594,20 @@
           "resources": {
             "required": [
               "id",
-              "slug"
+              "url",
+              "name"
             ],
             "properties": {
               "id": {
-                "type": "string"
-              },
-              "slug": {
                 "type": "string"
               },
               "url": {
                 "type": "string"
               },
               "author": {
+                "type": "string"
+              },
+              "name": {
                 "type": "string"
               },
               "created_by": {
@@ -676,7 +677,8 @@
           "tags": {
             "required": [
               "id",
-              "slug"
+              "slug",
+              "name"
             ],
             "properties": {
               "id": {
@@ -686,6 +688,12 @@
                 "type": "string"
               },
               "author": {
+                "type": "string"
+              },
+              "view": {
+                "type": "integer"
+              },
+              "name": {
                 "type": "string"
               },
               "created_by": {
@@ -699,19 +707,23 @@
           "synonyms": {
             "required": [
               "id",
+              "name",
               "slug"
             ],
             "properties": {
               "id": {
                 "type": "string"
               },
+              "name": {
+                "type": "string"
+              },
               "slug": {
                 "type": "string"
               },
-              "author": {
-                "type": "string"
-              },
               "tags": {
+                "type": "component"
+              },
+              "author": {
                 "type": "string"
               },
               "created_by": {

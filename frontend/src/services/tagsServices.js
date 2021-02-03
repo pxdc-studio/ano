@@ -2,7 +2,7 @@ import http from './httpService';
 
 const apiEndpoint = '/tags';
 
-export function getAllTags({ pageSize = 5, page = 1 } = {}) {
+export function getAllTags({ pageSize = 5, page = 0 } = {}) {
   return http.get(`${apiEndpoint}?pageSize=${pageSize}&page=${page}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
   });

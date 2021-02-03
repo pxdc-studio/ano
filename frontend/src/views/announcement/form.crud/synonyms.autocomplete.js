@@ -20,10 +20,7 @@ const STAGE = {
 
 const FILTER = createFilterOptions();
 
-export const AutocompleteBySynonym = forwardRef(function (
-  { name, value: _value, options: _options, tableProps, onChange },
-  parentRef
-) {
+export const Synonyms = forwardRef(function ({ name, value: _value, options: _options, tableProps }, parentRef) {
   if (tableProps) {
     _value = tableProps?.rowData?.tags;
   }
@@ -73,9 +70,6 @@ export const AutocompleteBySynonym = forwardRef(function (
 
     function evtInputChange(event, values) {
       setValue(values);
-      if (onChange) {
-        onChange(values);
-      }
       if (tableProps?.onRowDataChange) {
         tableProps.onRowDataChange({ ...tableProps.rowData, tags: values });
       }

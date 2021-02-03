@@ -11,18 +11,18 @@
     "draftAndPublish": false
   },
   "attributes": {
-    "slug": {
-      "type": "string",
-      "unique": true,
-      "required": true
-    },
     "url": {
       "type": "string",
-      "unique": true
+      "unique": false,
+      "required": true
     },
     "author": {
-      "plugin": "admin",
+      "plugin": "users-permissions",
       "model": "user"
+    },
+    "name": {
+      "type": "string",
+      "required": true
     }
   }
 }

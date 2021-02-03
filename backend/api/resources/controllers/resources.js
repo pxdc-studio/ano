@@ -12,18 +12,12 @@ const slugify = require("slugify");
 
 module.exports = {
   async autocomplete(ctx) {
-    let { slug } = ctx.params;
-
-    slug = slug = slugify(slug, {
-      replacement: "-",
-      lower: true,
-      strict: true,
-    });
+    let { name } = ctx.params;
 
     let raw = await strapi
       .query("resources")
       .model.query((q) => {
-        q.where("resources.slug", "LIKE", `${slug}%`);
+        q.where("resources.name", "LIKE", `${name}%`);
         q.orderBy("created_at", "desc");
       })
       .fetchAll();
@@ -37,7 +31,7 @@ module.exports = {
     const user = ctx.state.user;
     const authorId = user ? user.id : -1; // none reachable user id
 
-    const { pageSize = 20, page = 1 } = ctx.query;
+    const { pageSize = 20, page = 0 } = ctx.query;
     let raw = await strapi
       .query("resources")
       .model.query((q) => {
@@ -64,14 +58,22 @@ module.exports = {
   async create(ctx) {
     const user = ctx.state.user;
     const authorId = user ? user.id : -1; // none reachable user id
-
-    const { resources: input_resources } = ctx.request.body;
+    const { name, url } = ctx.request.body;
 
     try {
-      let data = await createResources(input_resources, authorId);
-      return { status: 200, data: data };
+      let result = await strapi.query("resources").create({
+        name: name,
+        author: authorId,
+        url: url,
+      });
+
+      return {
+        status: 200,
+        data: result,
+        message: "Resource created successful",
+      };
     } catch (e) {
-      return { status: 400 };
+      return { status: 400, message: "Unknowned Error when create Resource" };
     }
   },
   async delete(ctx) {
@@ -86,7 +88,7 @@ module.exports = {
       });
 
       if (isInUse) {
-        return { status: 304 }; // inuse
+        return { status: 304, message: "Resource is in use" }; // inuse
       }
 
       await strapi
@@ -97,9 +99,9 @@ module.exports = {
         })
         .destroy();
 
-      return { status: 200 };
+      return { status: 200, message: "Resource delete successful" };
     } catch (e) {
-      return { status: 400 };
+      return { status: 400, message: "Unknow Error while resource delete" };
     }
   },
   async update(ctx) {
@@ -107,7 +109,7 @@ module.exports = {
     const authorId = user ? user.id : -1; // none reachable user id
 
     const { id: resource_id } = ctx.params;
-    let { url, slug } = ctx.request.body;
+    let { url, name } = ctx.request.body;
 
     try {
       await strapi
@@ -118,19 +120,16 @@ module.exports = {
         })
         .save(
           {
-            slug: slugify(slug, {
-              replacement: "-",
-              lower: true,
-              strict: true,
-            }),
+            name: name,
             url: encodeURIComponent(url),
           },
           { patch: true }
         );
 
-      return { status: 200 };
+      return { status: 200, message: "Resource Updated Successful" };
     } catch (e) {
-      return { status: 400 };
+      console.log(e);
+      return { status: 400, message: "Unknow Error Updating Resources" };
     }
   },
 };

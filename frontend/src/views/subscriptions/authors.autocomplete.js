@@ -7,11 +7,11 @@ import MaterialTable from 'material-table';
 import { toast } from 'react-toastify';
 import Page from 'src/components/Page';
 import { getAllSynonyms, deleteSynonym, postSynonym, putSynonyms } from 'src/services/synonymsService';
-import TagsIcon from '@material-ui/icons/Bookmarks';
+import FaceIcon from '@material-ui/icons/Face';
 
 import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
 
-import { getSynonymsAutocomplete } from 'src/services/synonymsService';
+import { getAuthorsAutocomplete } from 'src/services/authorService';
 
 const STAGE = {
   LOADING: 0,
@@ -20,7 +20,7 @@ const STAGE = {
 
 const FILTER = createFilterOptions();
 
-export const AutocompleteBySynonym = forwardRef(function (
+export const AutocompleteByAuthor = forwardRef(function (
   { name, value: _value, options: _options, tableProps, onChange },
   parentRef
 ) {
@@ -42,7 +42,7 @@ export const AutocompleteBySynonym = forwardRef(function (
     }
 
     setSTAGE(STAGE.LOADING);
-    let { data } = await getSynonymsAutocomplete(input);
+    let { data } = await getAuthorsAutocomplete(input);
     if (data && data.length > 0) {
       setOptions(data);
     }
@@ -56,7 +56,7 @@ export const AutocompleteBySynonym = forwardRef(function (
         <TextField
           {...params}
           onChange={(e) => autoComplete(e.target.value)}
-          label="Find Synonym"
+          label="Find Author"
           variant="outlined"
           InputProps={{
             ...params.InputProps,
@@ -91,7 +91,7 @@ export const AutocompleteBySynonym = forwardRef(function (
           value={value}
           multiple
           options={options}
-          getOptionLabel={(option) => option.name}
+          getOptionLabel={(option) => option.username}
           filterSelectedOptions
           fullWidth
           loading={stage == STAGE.LOADING ? true : false}
@@ -100,16 +100,22 @@ export const AutocompleteBySynonym = forwardRef(function (
           renderInput={Input}
           filterOptions={evtFilterChange}
           getOptionSelected={(v, n) => {
-            if (v.inputValue != null && n.name != v.inputValue) return false;
-            return n.name == v.name ? true : false;
+            if (v.inputValue != null && n.username != v.inputValue) return false;
+            return n.username == v.username ? true : false;
           }}
           renderOption={(p) => {
-            return <Chip icon={<TagsIcon />} size="small" label={p.name} />;
+            return <Chip icon={<FaceIcon />} size="small" label={p.username} />;
           }}
           renderTags={(row) => {
             return row
               ? row.map((item) => (
-                  <Chip key={item.name} icon={<TagsIcon />} size="small" label={item.name} style={{ margin: 2 }} />
+                  <Chip
+                    key={item.username}
+                    icon={<FaceIcon />}
+                    size="small"
+                    label={item.username}
+                    style={{ margin: 2 }}
+                  />
                 ))
               : '';
           }}

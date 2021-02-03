@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -8,7 +10,7 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
+  InputLabel
 } from '@material-ui/core';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -28,7 +30,6 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3),
     paddingRight: theme.spacing(20)
-
   }
 }));
 
@@ -37,7 +38,9 @@ const SubscriptionForm = () => {
   const disgestsArr = ['daily', 'weekly', 'monthly'];
   const navigate = useNavigate();
   const { id } = useParams(); // get params ID v.i.a useParams hook
-  const { state } = useLocation(); // get state from routing v.i.a useLocation hook
+  const { state: _state } = useLocation(); // get state from routing v.i.a useLocation hook
+  const [state, setState] = useState(_state || {});
+
   const [tags, setTags] = useState([]);
   const [authors, setAuthors] = useState([]);
 
@@ -77,16 +80,8 @@ const SubscriptionForm = () => {
   };
 
   return (
-    <Page
-      className={classes.root}
-      title="Subscriptions"
-    >
-      <Box
-        display="flex"
-        flexDirection="column"
-        height="100%"
-        justifyContent="center"
-      >
+    <Page className={classes.root} title="Subscriptions">
+      <Box display="flex" flexDirection="column" height="100%" justifyContent="center">
         <Container maxWidth="sm">
           <Formik
             enableReinitializ
@@ -101,36 +96,21 @@ const SubscriptionForm = () => {
               await setSubmitting(false);
             }}
           >
-            {({
-              errors,
-              handleBlur,
-              handleChange,
-              handleSubmit,
-              isSubmitting,
-              touched,
-              values
-            }) => (
+            {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values = {} }) => (
               <form onSubmit={handleSubmit}>
                 <Box mb={3}>
-                  <Typography
-                    color="textPrimary"
-                    variant="h2"
-                  >
+                  <Typography color="textPrimary" variant="h2">
                     Subscription
                   </Typography>
                 </Box>
-                <Box my={3}>
+                {/* <Box my={3}>
                   <FormControl error={Boolean(touched.announId && errors.announId)} fullWidth>
                     <InputLabel>Digests</InputLabel>
-                    <Select
-                      name="digest"
-                      fullWidth
-                      value={values.digest}
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                    >
+                    <Select name="digest" fullWidth value={values.digest} onBlur={handleBlur} onChange={handleChange}>
                       {disgestsArr.map((digest) => (
-                        <MenuItem key={digest} value={digest}>{digest.toUpperCase()}</MenuItem>
+                        <MenuItem key={digest} value={digest}>
+                          {digest.toUpperCase()}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -138,15 +118,11 @@ const SubscriptionForm = () => {
                 <Box my={3}>
                   <FormControl error={Boolean(touched.announId && errors.announId)} fullWidth>
                     <InputLabel>Authors</InputLabel>
-                    <Select
-                      name="author"
-                      fullWidth
-                      value={values.author}
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                    >
+                    <Select name="author" fullWidth value={values.author} onBlur={handleBlur} onChange={handleChange}>
                       {authors.map((author) => (
-                        <MenuItem key={author.id} value={author.id}>{author.name}</MenuItem>
+                        <MenuItem key={author.id} value={author.id}>
+                          {author.name}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -154,19 +130,15 @@ const SubscriptionForm = () => {
                 <Box my={3}>
                   <FormControl error={Boolean(touched.announId && errors.announId)} fullWidth>
                     <InputLabel>Tags</InputLabel>
-                    <Select
-                      name="tag"
-                      fullWidth
-                      value={values.tag}
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                    >
+                    <Select name="tag" fullWidth value={values.tag} onBlur={handleBlur} onChange={handleChange}>
                       {tags.map((tag) => (
-                        <MenuItem key={tag.id} value={tag.id}>{tag.name}</MenuItem>
+                        <MenuItem key={tag.id} value={tag.id}>
+                          {tag.name}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
-                </Box>
+                </Box> */}
                 <Box my={4}>
                   <Button
                     color="primary"

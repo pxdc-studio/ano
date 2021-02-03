@@ -2,7 +2,7 @@
   "kind": "collectionType",
   "collectionName": "subscriptions",
   "info": {
-    "name": "subscriptions",
+    "name": "Subscriptions",
     "description": ""
   },
   "options": {
@@ -11,24 +11,34 @@
     "draftAndPublish": false
   },
   "attributes": {
-    "user": {
+    "author": {
       "plugin": "users-permissions",
       "model": "user"
     },
-    "tags": {
-      "type": "component",
-      "repeatable": true,
-      "component": "subscriptions.tags"
+    "excludes": {
+      "type": "dynamiczone",
+      "components": [
+        "subscriptions.authors",
+        "subscriptions.synonyms",
+        "subscriptions.tags"
+      ]
     },
-    "synonyms": {
-      "type": "component",
-      "repeatable": true,
-      "component": "subscriptions.synonyms"
+    "includes": {
+      "type": "dynamiczone",
+      "components": [
+        "subscriptions.authors",
+        "subscriptions.synonyms",
+        "subscriptions.tags"
+      ]
     },
-    "authors": {
-      "type": "component",
-      "repeatable": true,
-      "component": "subscriptions.authors"
+    "digest": {
+      "type": "enumeration",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly",
+        "yearly"
+      ]
     }
   }
 }

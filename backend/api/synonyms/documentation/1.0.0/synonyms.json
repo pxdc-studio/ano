@@ -585,14 +585,62 @@
       "Synonyms": {
         "required": [
           "id",
+          "name",
           "slug"
         ],
         "properties": {
           "id": {
             "type": "string"
           },
+          "name": {
+            "type": "string"
+          },
           "slug": {
             "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "tag": {
+                  "required": [
+                    "id",
+                    "slug",
+                    "name"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "string"
+                    },
+                    "view": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "created_by": {
+                      "type": "string"
+                    },
+                    "updated_by": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           },
           "author": {
             "required": [
@@ -641,44 +689,66 @@
                 "type": "string"
               }
             }
-          },
-          "tags": {
-            "required": [
-              "id",
-              "slug"
-            ],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "slug": {
-                "type": "string"
-              },
-              "author": {
-                "type": "string"
-              },
-              "created_by": {
-                "type": "string"
-              },
-              "updated_by": {
-                "type": "string"
-              }
-            }
           }
         }
       },
       "NewSynonyms": {
         "required": [
+          "name",
           "slug"
         ],
         "properties": {
+          "name": {
+            "type": "string"
+          },
           "slug": {
             "type": "string"
           },
-          "author": {
-            "type": "string"
-          },
           "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "tag": {
+                  "required": [
+                    "id",
+                    "slug",
+                    "name"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "string"
+                    },
+                    "view": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "created_by": {
+                      "type": "string"
+                    },
+                    "updated_by": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "author": {
             "type": "string"
           },
           "created_by": {

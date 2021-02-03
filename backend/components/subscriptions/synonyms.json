@@ -9,10 +9,6 @@
   "attributes": {
     "synonym": {
       "model": "synonyms"
-    },
-    "exclude_authors": {
-      "plugin": "users-permissions",
-      "collection": "user"
     }
   }
 }

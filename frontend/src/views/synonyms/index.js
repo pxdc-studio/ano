@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { Box, Chip, Container, makeStyles } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
@@ -8,11 +8,10 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Page from 'src/components/Page';
 import { getAllSynonyms, deleteSynonym, postSynonym, putSynonyms } from 'src/services/synonymsService';
+import TagIcon from '@material-ui/icons/Bookmark';
+import TagsIcon from '@material-ui/icons/Bookmarks';
 
-import { Tags } from 'src/views/announcement/form.crud';
-
-import { getTagsAutocomplete } from 'src/services/tagsServices';
-
+import { AutocompleteByTagName } from './tags.autocomplete';
 /**
  * path: /app/synonyms
  *      description: synonyms CRUD
@@ -55,8 +54,7 @@ const themeTable = createMuiTheme({
   }
 });
 
-const Synonyms = () => {
-  const navigate = useNavigate();
+export default () => {
   const classes = useStyles();
   const theme = useTheme();
   const [loader, setLoader] = useState(true);
@@ -69,6 +67,12 @@ const Synonyms = () => {
       let { status, data } = await getAllSynonyms({
         pageSize: query.pageSize,
         page: query.page
+      });
+
+      //cleanup before use, or it will messup our system
+      data.data = data.data.map((item) => {
+        item.tags = item.tags.map((tag) => tag.tag); // this is due to sql return nesting object
+        return item;
       });
 
       if (status == 200) {
@@ -84,34 +88,35 @@ const Synonyms = () => {
 
   // Resources remove function
   const handleDeleteResource = async ({ id }) => {
-    const { status } = await deleteSynonym(id);
+    const { data } = await deleteSynonym(id);
+    let { status, message } = data;
     if (status === 200) {
+      toast.success(message);
       return true;
     }
+    toast.error(message);
     return false;
   };
 
-  const handleUpdateResource = async (v, oldData) => {
-    const { status } = await putSynonyms({
-      id: v.id,
-      slug: v.slug,
-      tags: tagRef.current.value.map((r) => ({ slug: r.title }))
-    });
+  const handleUpdateResource = async (value, oldData) => {
+    const { data } = await putSynonyms(value);
+    const { status, message } = data;
     if (status === 200) {
-      return v;
+      toast.success(message);
+      return value;
     }
     return false;
   };
 
   const handleAddResource = async (newData, oldData) => {
-    const { status, data } = await postSynonym({
-      slug: newData.slug,
-      tags: tagRef.current.value.map((r) => ({ slug: r.title }))
-    });
-
-    if (status === 200 && data.length > 0) {
+    const { data } = await postSynonym(newData);
+    const { status, message } = data;
+    if (status == 200) {
+      toast.success(message);
       return newData;
     }
+
+    toast.error(message);
   };
 
   return (
@@ -125,18 +130,28 @@ const Synonyms = () => {
               columns={[
                 {
                   title: 'Synonym',
+                  field: 'name',
+                  validate: (rowData) => rowData.name != null && rowData.name.length > 0
+                },
+                {
+                  title: 'Slug',
                   field: 'slug',
-                  render: (dataRow) => <Chip label={dataRow.slug.split('-').join(' ')} />,
-                  validate: (rowData) => rowData.slug != null && rowData.slug.length > 0
+                  render: (dataRow) => (
+                    <Chip icon={<TagsIcon />} label={dataRow.slug} size="small" style={{ margin: 2 }} />
+                  ),
+                  editable: 'never'
                 },
                 {
                   title: 'Tags',
                   field: 'tags',
-                  render: (dataRow) => dataRow.tags.map((tag, index) => <Chip key={index} label={tag.slug} />),
-                  editComponent: ({ rowData }) => {
-                    let data = rowData.tags ? rowData.tags.map((r) => ({ title: r.slug.split('-').join(' ') })) : [];
-                    return <Tags name="Tags" service={getTagsAutocomplete} ref={tagRef} value={data} />;
-                  }
+                  render: (dataRow) =>
+                    dataRow.tags.map((tag, index) => (
+                      <Chip icon={<TagIcon />} key={index} label={tag.slug} size="small" style={{ margin: 2 }} />
+                    )),
+                  editComponent: (props) => {
+                    return <AutocompleteByTagName ref={tagRef} tableProps={props} />;
+                  },
+                  validate: (rowData) => rowData.tags != null && rowData.tags.length > 0
                 }
               ]}
               data={fetchAllResources}
@@ -150,7 +165,7 @@ const Synonyms = () => {
               options={{
                 actionsColumnIndex: -1,
                 search: false,
-                filtering: false,
+                filtering: true,
                 paging: true,
                 pageSize: 5,
                 pageSizeOptions: [5, 10, 20],
@@ -177,5 +192,3 @@ const Synonyms = () => {
     </Page>
   );
 };
-
-export default Synonyms;
