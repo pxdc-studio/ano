@@ -1,41 +1,17 @@
-/* eslint-disable */
-import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
-import {
-  Box,
-  Container,
-  makeStyles,
-  Button,
-  TextField,
-  Chip,
-  Avatar,
-  Popover,
-  Typography,
-  CircularProgress,
-  Grid,
-  useTheme
-} from '@material-ui/core';
+import React, { useState } from 'react';
+import { Box, Container, makeStyles, Chip, Typography, useTheme } from '@material-ui/core';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Page from 'src/components/Page';
 import { toast } from 'react-toastify';
-import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
-import { bindPopover } from 'material-ui-popup-state';
-import { usePopupState } from 'material-ui-popup-state/hooks';
 
-import { Formik } from 'formik';
-import AddIcon from '@material-ui/icons/Add';
-import { getAuthorsAutocomplete } from 'src/services/authorService';
-import { getTagsAutocomplete } from 'src/services/tagsServices';
-import { getSynonymsAutocomplete } from 'src/services/synonymsService';
 import MaterialTable from 'material-table';
 import FaceIcon from '@material-ui/icons/Face';
 import TagIcon from '@material-ui/icons/Bookmark';
 import TagsIcon from '@material-ui/icons/Bookmarks';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import ToggleButton from '@material-ui/lab/ToggleButton';
-import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
-import { AutocompleteByTag } from './tags.autocomplete';
-import { AutocompleteByAuthor } from './authors.autocomplete';
-import { AutocompleteBySynonym } from './synonym.autocomplete';
+
+import { AutocompleteByAuthor } from 'src/components/autocomplete/authors.autocomplete';
+import { AutocompleteByTagName } from 'src/components/autocomplete/tags.autocomplete';
+import { AutocompleteSynonymByName } from 'src/components/autocomplete/synonyms.autocomplete';
 
 import {
   getAllSubscriptions,
@@ -47,12 +23,7 @@ import {
  * path: /app/subscriptions
  *      description: subscriptions CRUD
  */
-const STAGE = {
-  READY: 0,
-  SUCCESS: 1,
-  LOADING: 2,
-  LOADED: 3
-};
+
 // Styles for root component
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -90,24 +61,17 @@ const themeTable = createMuiTheme({
   }
 });
 
-export default function () {
+export default function Subscriptions() {
   const classes = useStyles();
-  const [tags, setTags] = useState([]);
-  const [authors, setAuthors] = useState([]);
-  const [synonyms, setSynonyms] = useState([]);
 
   const [loader, setLoader] = useState(false);
   // eslint-disable-next-line no-unused-vars
 
-  const tagRef = useRef();
-  const authorRef = useRef();
-  const synonymRef = useRef();
   const theme = useTheme();
-  let navigate = useNavigate();
 
   async function fetchAllSubscriptions() {
     try {
-      const { status, data } = await getAllSubscriptions();
+      const { data } = await getAllSubscriptions();
       return data;
     } catch (ex) {
       toast.error(ex.response.data.message);
@@ -115,34 +79,10 @@ export default function () {
     }
   }
 
-  const ACTIONS = [
-    {
-      icon: 'add',
-      tooltip: 'Add Subscriptions',
-      position: 'toolbar',
-      isFreeAction: true,
-      onClick: () => {
-        navigate('/subscriptions/add');
-      }
-    }
-  ];
-
-  async function _handleSubmit(e) {
-    setLoader(true);
-
-    await postSubscription({
-      tags: tags,
-      authors: authorRef.current.value,
-      synonyms: synonymRef.current.value
-    });
-
-    setLoader(false);
-  }
-
   async function handleDeleteResource({ id }) {
     try {
       const { data } = await deleteSubscription(id);
-      let { status, message } = data;
+      const { status, message } = data;
 
       if (status === 200) {
         toast.success(message);
@@ -156,8 +96,8 @@ export default function () {
 
   async function handleUpdateResource(values) {
     try {
-      let { data } = await putSubscription(values);
-      let { status, message } = data;
+      const { data } = await putSubscription(values);
+      const { status, message } = data;
 
       if (status === 200) {
         toast.success(message);
@@ -171,8 +111,8 @@ export default function () {
 
   async function handleAddResource(values) {
     try {
-      let { data } = await postSubscription(values);
-      let { status, message } = data;
+      const { data } = await postSubscription(values);
+      const { status, message } = data;
 
       if (status === 200) {
         toast.success(message);
@@ -184,6 +124,66 @@ export default function () {
     }
   }
 
+  function mapDynamicType(r) {
+    if (!r?.tag && !r?.author && !r?.synonym) return;
+    if (r.__component === 'subscriptions.tags') {
+      return <Chip icon={<TagIcon />} key={r.tag.id} label={r.tag.name} size="small" style={{ margin: 2 }} />;
+    }
+
+    if (r.__component === 'subscriptions.synonyms') {
+      return <Chip icon={<TagsIcon />} key={r.synonym.id} label={r.synonym.name} size="small" style={{ margin: 2 }} />;
+    }
+
+    if (r.__component === 'subscriptions.authors') {
+      return (
+        <Chip icon={<FaceIcon />} key={r.author.id} label={r.author.username} size="small" style={{ margin: 2 }} />
+      );
+    }
+    return null;
+  }
+
+  const COLUMNS = [
+    {
+      title: 'Includes',
+      field: 'includes',
+      render: (rowData) => rowData.includes.map(mapDynamicType),
+      editComponent: (props) => {
+        return <EditBox {...props} name="Includes" rowData={props} hash="includes" />;
+      }
+    },
+    {
+      title: 'Excludes',
+      field: 'excludes',
+      render: (rowData) => rowData.excludes.map(mapDynamicType),
+      editComponent: (props) => {
+        return <EditBox {...props} name="Excludes" rowData={props} hash="excludes" />;
+      }
+    },
+    {
+      title: 'Digest',
+      field: 'digest',
+      lookup: { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' },
+      initialEditValue: 'daily'
+    }
+  ];
+
+  const OPTIONS = {
+    addRowPosition: 'first',
+    actionsColumnIndex: -1,
+    search: false,
+    filtering: true,
+    paging: true,
+    pageSize: 5,
+    pageSizeOptions: [5, 10, 20],
+    headerStyle: {
+      backgroundColor: theme.palette.primary.main,
+      color: '#FFF',
+      '&:hover': {
+        color: '#FFF'
+      }
+    }
+  };
+
   return (
     <Page className={classes.root} title="Subcriptions">
       <Container maxWidth={false}>
@@ -192,117 +192,14 @@ export default function () {
             <MaterialTable
               title="My Subcriptions"
               isLoading={loader}
-              // actions={ACTIONS}
               editable={{
                 onRowAdd: handleAddResource,
                 onRowUpdate: handleUpdateResource,
                 onRowDelete: handleDeleteResource
               }}
-              columns={[
-                {
-                  title: 'Includes',
-                  field: 'includes',
-                  render: (rowData) =>
-                    rowData.includes.map((r, index) => {
-                      if (!r?.tag && !r?.author && !r?.synonym) return;
-                      if (r.__component == 'subscriptions.tags') {
-                        return (
-                          <Chip icon={<TagIcon />} key={index} label={r.tag.name} size="small" style={{ margin: 2 }} />
-                        );
-                      }
-
-                      if (r.__component == 'subscriptions.synonyms') {
-                        return (
-                          <Chip
-                            icon={<TagsIcon />}
-                            key={index}
-                            label={r.synonym.name}
-                            size="small"
-                            style={{ margin: 2 }}
-                          />
-                        );
-                      }
-
-                      if (r.__component == 'subscriptions.authors') {
-                        return (
-                          <Chip
-                            icon={<FaceIcon />}
-                            key={index}
-                            label={r.author.username}
-                            size="small"
-                            style={{ margin: 2 }}
-                          />
-                        );
-                      }
-                    }),
-                  editComponent: (props) => {
-                    return <EditBox {...props} name="Includes" rowData={props} hash="includes" />;
-                  }
-                },
-                {
-                  title: 'Excludes',
-                  field: 'excludes',
-                  render: (rowData) =>
-                    rowData.excludes.map((r, index) => {
-                      if (!r?.tag && !r?.author && !r?.synonym) return;
-                      if (r.__component == 'subscriptions.tags') {
-                        return (
-                          <Chip icon={<TagIcon />} key={index} label={r.tag.name} size="small" style={{ margin: 2 }} />
-                        );
-                      }
-
-                      if (r.__component == 'subscriptions.synonyms') {
-                        return (
-                          <Chip
-                            icon={<TagsIcon />}
-                            key={index}
-                            label={r.synonym.name}
-                            size="small"
-                            style={{ margin: 2 }}
-                          />
-                        );
-                      }
-
-                      if (r.__component == 'subscriptions.authors') {
-                        return (
-                          <Chip
-                            icon={<FaceIcon />}
-                            key={index}
-                            label={r.author.username}
-                            size="small"
-                            style={{ margin: 2 }}
-                          />
-                        );
-                      }
-                    }),
-                  editComponent: (props) => {
-                    return <EditBox {...props} name="Excludes" rowData={props} hash="excludes" />;
-                  }
-                },
-                {
-                  title: 'Digest',
-                  field: 'digest',
-                  lookup: { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' },
-                  initialEditValue: 'daily'
-                }
-              ]}
+              columns={COLUMNS}
               data={fetchAllSubscriptions}
-              options={{
-                addRowPosition: 'first',
-                actionsColumnIndex: -1,
-                search: false,
-                filtering: true,
-                paging: true,
-                pageSize: 5,
-                pageSizeOptions: [5, 10, 20],
-                headerStyle: {
-                  backgroundColor: theme.palette.primary.main,
-                  color: '#FFF',
-                  '&:hover': {
-                    color: '#FFF'
-                  }
-                }
-              }}
+              options={OPTIONS}
             />
           </MuiThemeProvider>
         </Box>
@@ -320,11 +217,12 @@ export default function () {
 }
 
 function EditBox({ name, rowData, hash }) {
+  //Map Data From Autocompete back to rowData
   function onTagChange(values) {
     if (!rowData.rowData[hash]) {
       rowData.rowData[hash] = [];
     }
-    let row = rowData.rowData[hash].filter((item) => item.__component != 'subscriptions.tags');
+    let row = rowData.rowData[hash].filter((item) => item.__component !== 'subscriptions.tags');
     row = row.concat(values.map((data) => ({ __component: 'subscriptions.tags', tag: data })));
     rowData.onRowDataChange({
       ...rowData.rowData,
@@ -336,7 +234,7 @@ function EditBox({ name, rowData, hash }) {
     if (!rowData.rowData[hash]) {
       rowData.rowData[hash] = [];
     }
-    let row = rowData.rowData[hash].filter((item) => item.__component != 'subscriptions.authors');
+    let row = rowData.rowData[hash].filter((item) => item.__component !== 'subscriptions.authors');
     row = row.concat(values.map((data) => ({ __component: 'subscriptions.authors', author: data })));
     rowData.onRowDataChange({
       ...rowData.rowData,
@@ -348,7 +246,7 @@ function EditBox({ name, rowData, hash }) {
     if (!rowData.rowData[hash]) {
       rowData.rowData[hash] = [];
     }
-    let row = rowData.rowData[hash].filter((item) => item.__component != 'subscriptions.synonyms');
+    let row = rowData.rowData[hash].filter((item) => item.__component !== 'subscriptions.synonyms');
     row = row.concat(values.map((data) => ({ __component: 'subscriptions.synonyms', synonym: data })));
     rowData.onRowDataChange({
       ...rowData.rowData,
@@ -356,15 +254,17 @@ function EditBox({ name, rowData, hash }) {
     });
   }
 
-  let tags, authors, synonyms;
+  let tags;
+  let authors;
+  let synonyms;
 
   if (rowData && rowData.rowData[hash]) {
-    tags = rowData.rowData[hash].filter((item) => item.__component == 'subscriptions.tags').map((item) => item.tag);
+    tags = rowData.rowData[hash].filter((item) => item.__component === 'subscriptions.tags').map((item) => item.tag);
     authors = rowData?.rowData[hash]
-      .filter((item) => item.__component == 'subscriptions.authors')
+      .filter((item) => item.__component === 'subscriptions.authors')
       .map((item) => item.author);
     synonyms = rowData?.rowData[hash]
-      .filter((item) => item.__component == 'subscriptions.synonyms')
+      .filter((item) => item.__component === 'subscriptions.synonyms')
       .map((item) => item.synonym);
   }
 
@@ -372,15 +272,14 @@ function EditBox({ name, rowData, hash }) {
     <Box p={2}>
       <h4>{name}</h4>
       <Box mt={2}>
-        <AutocompleteByTag onChange={onTagChange} value={tags} creatable={false} />
+        <AutocompleteByTagName onChange={onTagChange} value={tags} creatable={false} />
       </Box>
       <Box mt={2}>
         <AutocompleteByAuthor onChange={onAuthorChange} value={authors} />
       </Box>
       <Box mt={2}>
-        <AutocompleteBySynonym onChange={onSynonymChange} value={synonyms} />
+        <AutocompleteSynonymByName onChange={onSynonymChange} value={synonyms} />
       </Box>
     </Box>
   );
-  // return <AutocompleteByName />;
 }

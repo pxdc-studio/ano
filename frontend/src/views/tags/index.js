@@ -1,11 +1,8 @@
-/* eslint-disable */
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { Box, Container, TextField, makeStyles, Chip } from '@material-ui/core';
+import React, { useMemo, useState } from 'react';
+import { Box, Container, makeStyles, Chip } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import update from 'immutability-helper';
 
 import Page from 'src/components/Page';
 import { getAllTags, postTag, putTag, deleteTag } from 'src/services/tagsServices';
@@ -70,12 +67,12 @@ export default () => {
 
   async function fetchAllResources(query) {
     try {
-      let { status, data } = await getAllTags({
+      const { status, data } = await getAllTags({
         pageSize: query.pageSize,
         page: query.page
       });
 
-      if (status == 200) {
+      if (status === 200) {
         setLoader(false);
 
         return data;
@@ -93,10 +90,8 @@ export default () => {
     if (status === 200) {
       toast.success(message);
       return true;
-    } else {
-      toast.error(message);
-      return false;
     }
+    toast.error(message);
   };
 
   const handleUpdateResource = async (newData) => {
@@ -105,9 +100,8 @@ export default () => {
     if (status === 200) {
       toast.success(message);
       return newData;
-    } else {
-      toast.error(message);
     }
+    toast.error(message);
   };
 
   const handleAddResource = async (newData) => {
@@ -116,9 +110,8 @@ export default () => {
     if (status === 200) {
       toast.success(message);
       return newData;
-    } else {
-      toast.error(message);
     }
+    toast.error(message);
   };
 
   return useMemo(() => {

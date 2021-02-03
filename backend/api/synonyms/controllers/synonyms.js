@@ -11,7 +11,6 @@ const { createTags, createResources, createSynonyms } = strapi.config.functions[
 ];
 
 const slugify = require("slugify");
-const { result } = require("lodash");
 
 module.exports = {
   async autocomplete(ctx) {
@@ -129,7 +128,6 @@ module.exports = {
 
       return { status: 200, message: "Synonym deleted Successfully" };
     } catch (e) {
-      console.log(e);
       return { status: 400, message: "Unknow Error Deleting Synonyms" };
     }
   },
@@ -177,7 +175,6 @@ module.exports = {
 
       return { status: 200, message: "Synonym Updated Successfully" };
     } catch (e) {
-      console.log(e);
       return { status: 400 };
     }
   },

@@ -1,6 +1,5 @@
-/* eslint-disable */
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { Box, Container, makeStyles, Chip, Avatar, Popover, TextField, Modal, Backdrop, Fade } from '@material-ui/core';
+import React, { useMemo, useState } from 'react';
+import { Box, Container, makeStyles, Chip } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
 import { useNavigate } from 'react-router-dom';
@@ -8,9 +7,6 @@ import Page from 'src/components/Page';
 import { getAllAnnouncements } from 'src/services/announcementService';
 import moment from 'moment';
 import { toast } from 'react-toastify';
-import { Label, Explicit } from '@material-ui/icons';
-import { ModalAddAnnouncement } from '../form.crud';
-import { StageContext } from '../context';
 import FaceIcon from '@material-ui/icons/Face';
 import TagIcon from '@material-ui/icons/Bookmark';
 import TagsIcon from '@material-ui/icons/Bookmarks';
@@ -99,31 +95,21 @@ const themeTable = createMuiTheme({
   }
 });
 
-const STAGE = {
-  CREATE: 0,
-  READY: 1
-};
-
 function AnnouncementView() {
-  const [stage, setStage] = useContext(StageContext);
-
   const [loader, setLoader] = useState(true);
-  const [announcements, setAnnouncements] = useState();
   const [selectedRow, setSelectedRow] = useState();
   const theme = useTheme();
   const classes = useStyles();
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(5);
   const navigate = useNavigate();
 
   async function fetchAnnouncements(query) {
     try {
-      let { status, data } = await getAllAnnouncements({
+      const { status, data } = await getAllAnnouncements({
         pageSize: query.pageSize,
         page: query.page
       });
 
-      if (status == 200) {
+      if (status === 200) {
         data.data = data.data.map((item) => {
           item.synonyms = item.synonyms.map((syn) => {
             syn.tags = syn.tags.map((tag) => tag.tag);
@@ -140,22 +126,6 @@ function AnnouncementView() {
       setLoader(false);
     }
   }
-  // useEffect(() => {
-  //   async function fetchAnnouncements() {
-  //     try {
-  //       const { status, data } = await getAllAnnouncements({ pageSize, page });
-  //       if (status === 200) {
-  //         setAnnouncements(data.data);
-  //         setLoader(false);
-  //       }
-  //     } catch (ex) {
-  //       toast.error(ex.response.data.message);
-  //       setAnnouncements([]);
-  //       setLoader(false);
-  //     }
-  //   }
-  //   fetchAnnouncements();
-  // }, [pageSize, page]);
 
   return useMemo(() => {
     const COLUMNS = [
@@ -179,8 +149,8 @@ function AnnouncementView() {
       {
         title: 'Tags',
         render: (rowData) => {
-          return rowData.tags.map((item, index) => (
-            <Chip icon={<TagIcon />} key={index} size="small" label={item.name} clickable style={{ margin: 2 }} />
+          return rowData.tags.map((item) => (
+            <Chip icon={<TagIcon />} key={item.name} size="small" label={item.name} clickable style={{ margin: 2 }} />
           ));
         },
         editable: 'never'
@@ -188,8 +158,8 @@ function AnnouncementView() {
       {
         title: 'Synnonyms',
         render: (rowData) => {
-          return rowData.synonyms.map((item, index) => (
-            <Chip icon={<TagsIcon />} key={index} size="small" label={item.name} clickable style={{ margin: 2 }} />
+          return rowData.synonyms.map((item) => (
+            <Chip icon={<TagsIcon />} key={item.name} size="small" label={item.name} clickable style={{ margin: 2 }} />
           ));
         },
         editable: 'never'
@@ -201,7 +171,7 @@ function AnnouncementView() {
       search: false,
       filtering: true,
       paging: true,
-      pageSize: pageSize,
+      pageSize: 5,
       pageSizeOptions: [5, 10, 20, 50, 100],
       headerStyle: {
         backgroundColor: theme.palette.primary.main,
@@ -218,6 +188,47 @@ function AnnouncementView() {
       })
     };
 
+    const DETAIL = [
+      {
+        icon: 'description',
+        tooltip: 'Show Resource',
+        render: (rowData) => {
+          return (
+            <div className={classes.resources}>
+              <h3>Messages</h3>
+              <div>{rowData.message}</div>
+              {rowData.resources.length > 0 && (
+                <>
+                  <hr />
+                  <h3>Resources</h3>
+                  <ul>
+                    {rowData.resources.map((item, index) => (
+                      <div key={item.slug}>
+                        <span>{index + 1}</span>
+                        <span className="col">{item.slug}</span>
+                        <span className="col">{item.url}</span>
+                      </div>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          );
+        }
+      }
+    ];
+
+    const ACTION = [
+      {
+        icon: 'create',
+        tooltip: 'Add Announcement',
+        isFreeAction: true,
+        onClick: () => {
+          navigate(`/announcements/add`);
+        }
+      }
+    ];
+
     return (
       <Box mt={4}>
         <MuiThemeProvider theme={themeTable}>
@@ -229,65 +240,24 @@ function AnnouncementView() {
             onRowClick={(evt, _selectedRow) => setSelectedRow(_selectedRow.tableData.id)}
             columns={COLUMNS}
             options={OPTIONS}
-            detailPanel={[
-              {
-                icon: 'description',
-                tooltip: 'Show Resource',
-                render: (rowData) => {
-                  return (
-                    <div className={classes.resources}>
-                      <h3>Messages</h3>
-                      <div>{rowData.message}</div>
-                      {rowData.resources.length > 0 && (
-                        <>
-                          <hr />
-                          <h3>Resources</h3>
-                          <ul>
-                            {rowData.resources.map((item, index) => (
-                              <div key={index}>
-                                <span>{index + 1}</span>
-                                <span className="col">{item.slug}</span>
-                                <span className="col">{item.url}</span>
-                              </div>
-                            ))}
-                          </ul>
-                        </>
-                      )}
-                    </div>
-                  );
-                }
-              }
-            ]}
-            actions={[
-              {
-                icon: 'create',
-                tooltip: 'Add Announcement',
-                isFreeAction: true,
-                onClick: (event, rowData) => {
-                  navigate(`/announcements/add`);
-                }
-              }
-            ]}
+            detailPanel={DETAIL}
+            actions={ACTION}
           />
         </MuiThemeProvider>
       </Box>
     );
-  }, [loader, announcements]);
+  }, [loader]);
 }
 
 const AnnouncementListView = () => {
   const classes = useStyles();
 
-  const [stage, setStage] = useState(STAGE.READY);
-
   return (
-    <StageContext.Provider value={[stage, setStage]}>
-      <Page className={classes.root} title="Announcement">
-        <Container maxWidth={false}>
-          <AnnouncementView />
-        </Container>
-      </Page>
-    </StageContext.Provider>
+    <Page className={classes.root} title="Announcement">
+      <Container maxWidth={false}>
+        <AnnouncementView />
+      </Container>
+    </Page>
   );
 };
 

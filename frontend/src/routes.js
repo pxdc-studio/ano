@@ -5,9 +5,8 @@ import MainLayout from 'src/layouts/MainLayout';
 import AccountView from 'src/views/account/AccountView';
 import AnnouncementBySubscription from 'src/views/announcement/by.subscription';
 import AnnouncementByPersonal from 'src/views/announcement/by.personal';
-
 import AnnouncementForm from 'src/views/announcement/form.crud';
-// import DashboardView from 'src/views/reports/DashboardView';
+import DashboardView from 'src/views/reports/DashboardView';
 import LoginView from 'src/views/auth/LoginView';
 import NotFoundView from 'src/views/errors/NotFoundView';
 import ProductListView from 'src/views/product/ProductListView';
@@ -48,7 +47,7 @@ const routes = [
       { path: 'announcements/me', element: <AnnouncementByPersonal auth={getAuthenticationData()} /> },
       { path: 'announcements/add', element: <AnnouncementForm action="create" /> },
       { path: 'announcements/update/:id', element: <AnnouncementForm action="update" /> },
-      // { path: 'dashboard', element: <DashboardView /> },
+      { path: 'dashboard', element: <DashboardView /> },
       { path: 'products', element: <ProductListView /> },
       { path: 'settings', element: <SettingsView /> },
       {

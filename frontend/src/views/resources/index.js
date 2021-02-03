@@ -1,10 +1,7 @@
-/* eslint-disable */
-
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Box, Container, makeStyles, Backdrop, Modal, TextField, Fade, Typography, Button } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Page from 'src/components/Page';
 import { getAllResources, deleteResource, postResource, putResource } from 'src/services/resourcesService';
@@ -167,28 +164,20 @@ export function PopupModal({ show }) {
   );
 }
 
-const STAGE = {
-  READY: 0,
-  CREATE: 1
-};
-
 export default () => {
   const classes = useStyles();
   const theme = useTheme();
   const [loader, setLoader] = useState(true);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [stage, setSTAGE] = useState(STAGE.READY);
-
-  const ref = useRef();
 
   async function fetchAllResources(query) {
     try {
-      let { status, data } = await getAllResources({
+      const { status, data } = await getAllResources({
         pageSize: query.pageSize,
         page: query.page
       });
 
-      if (status == 200) {
+      if (status === 200) {
         setLoader(false);
 
         return data;
@@ -203,7 +192,7 @@ export default () => {
   const handleDeleteResource = async ({ id }) => {
     try {
       const { data } = await deleteResource(id);
-      let { status, message } = data;
+      const { status, message } = data;
 
       if (status === 200) {
         toast.success(message);
@@ -215,10 +204,10 @@ export default () => {
     }
   };
 
-  const handleUpdateResource = async (newData, oldData) => {
+  const handleUpdateResource = async (newData) => {
     try {
       const { data } = await putResource(newData);
-      let { status, message } = data;
+      const { status, message } = data;
       if (status === 200) {
         toast.success(message);
         return newData;
@@ -229,19 +218,51 @@ export default () => {
     }
   };
 
-  const handleAddResource = async (newData, oldData) => {
+  const handleAddResource = async (newData) => {
     try {
       const { data } = await postResource(newData);
-      let { status, message } = data;
+      const { status, message } = data;
       if (status === 200) {
         toast.success(message);
         return newData;
-      } else {
-        toast.error(message);
       }
+      toast.error(message);
     } catch (er) {
       toast.error('Server Error');
     }
+  };
+
+  const COLUMNS = [
+    {
+      title: 'Name',
+      field: 'name',
+      render: (dataRow) => dataRow.name,
+      validate: (rowData) => rowData.name != null && rowData.name.length > 0
+    },
+    { title: 'Url', field: 'url', validate: (rowData) => rowData.url != null && rowData.url.length > 0 }
+  ];
+
+  const OPTIONS = {
+    addRowPosition: 'first',
+    actionsColumnIndex: -1,
+    search: false,
+    filtering: true,
+    paging: true,
+    pageSize: 5,
+    pageSizeOptions: [5, 10, 20],
+    headerStyle: {
+      backgroundColor: theme.palette.primary.main,
+      color: '#FFF',
+      '&:hover': {
+        color: '#FFF'
+      }
+    },
+    rowStyle: (rowData) => ({
+      fontFamily: 'Roboto',
+      backgroundColor:
+        selectedRow === rowData.tableData.id ? theme.palette.background.dark : theme.palette.background.default,
+      color: theme.palette.text.primary
+    })
   };
 
   return useMemo(() => {
@@ -251,18 +272,9 @@ export default () => {
           <Box mt={3}>
             <MuiThemeProvider theme={themeTable}>
               <MaterialTable
-                tableRef={ref}
                 title="Resources"
                 isLoading={loader}
-                columns={[
-                  {
-                    title: 'Name',
-                    field: 'name',
-                    render: (dataRow) => dataRow.name,
-                    validate: (rowData) => rowData.name != null && rowData.name.length > 0
-                  },
-                  { title: 'Url', field: 'url', validate: (rowData) => rowData.url != null && rowData.url.length > 0 }
-                ]}
+                columns={COLUMNS}
                 data={fetchAllResources}
                 editable={{
                   onRowAdd: handleAddResource,
@@ -271,30 +283,7 @@ export default () => {
                 }}
                 // eslint-disable-next-line
                 onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
-                options={{
-                  addRowPosition: 'first',
-                  actionsColumnIndex: -1,
-                  search: false,
-                  filtering: true,
-                  paging: true,
-                  pageSize: 5,
-                  pageSizeOptions: [5, 10, 20],
-                  headerStyle: {
-                    backgroundColor: theme.palette.primary.main,
-                    color: '#FFF',
-                    '&:hover': {
-                      color: '#FFF'
-                    }
-                  },
-                  rowStyle: (rowData) => ({
-                    fontFamily: 'Roboto',
-                    backgroundColor:
-                      selectedRow === rowData.tableData.id
-                        ? theme.palette.background.dark
-                        : theme.palette.background.default,
-                    color: theme.palette.text.primary
-                  })
-                }}
+                options={OPTIONS}
               />
             </MuiThemeProvider>
           </Box>

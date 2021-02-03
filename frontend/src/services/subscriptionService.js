@@ -41,12 +41,6 @@ export function postSubscription(objSubscribe) {
 
 export function putSubscription(objSubscribe) {
   const body = { ...objSubscribe };
-  delete body.id;
-  delete body.created_at;
-  delete body.updated_at;
-  delete body.author;
-
-  console.log(body);
   return http.put(`${apiEndpoint}/${objSubscribe.id}`, body, {
     headers: { Authorization: `Bearer ${localStorage.getItem('x-auth-token')}` }
   });

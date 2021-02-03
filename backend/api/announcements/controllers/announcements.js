@@ -7,13 +7,8 @@
 
 const { parseMultipartData, sanitizeEntity } = require("strapi-utils");
 const _ = require("lodash");
-const { find } = require("../../tags/controllers/tags");
-const { functions } = require("lodash");
-const { all } = require("lodash/fp");
 
-let { createTags, createResources, createSynonyms } = strapi.config.functions[
-  "common"
-];
+let { createTags } = strapi.config.functions["common"];
 
 module.exports = {
   async find(ctx) {
@@ -26,6 +21,7 @@ module.exports = {
         .query("subscriptions")
         .find({ author: authorId });
 
+      // return early if no subs found
       if (allsubs.length == 0) {
         return {
           data: [],
@@ -34,6 +30,9 @@ module.exports = {
         };
       }
 
+      /**
+       * Collect all tags from both includes and excludes synonyms to build query later
+       */
       let synonyms = allsubs.map((item) => {
         let synonyms = [];
         synonyms = synonyms.concat(
@@ -51,6 +50,8 @@ module.exports = {
         .query("synonyms")
         .find({ id_in: synonyms });
 
+      // Building or query for each subscriptions
+      // each OR query is a subscription
       let or = allsubs.map((item) => {
         function splitType(output, i) {
           if (i.__component == "subscriptions.synonyms") {
@@ -66,24 +67,25 @@ module.exports = {
           return output;
         }
 
+        //includes list and excludes list is build in to and query
+        //synonyms will make extra query to get tags and get add to include or exclude list of tags
         const includes = item.includes.reduce(splitType, [[], [], []]);
         const excludes = item.excludes.reduce(splitType, [[], [], []]);
+
         let _and = [];
 
-        // includes[0].length > 0 && _and.push({ synonyms_in: includes[0] });
         includes[1].length > 0 && _and.push({ tags_in: includes[1] });
         includes[2].length > 0 && _and.push({ author_in: includes[2] });
 
-        // excludes[0].length > 0 && _and.push({ synonyms_nin: excludes[0] });
         excludes[1].length > 0 && _and.push({ tags_nin: excludes[1] });
         excludes[2].length > 0 && _and.push({ author_nin: excludes[2] });
 
         let includesTagFromSyn = tagsFromSynonyms.find((item) =>
           includes[0].includes(item.id)
-        ); // find tags from synonym
+        );
         let excludesTagFromSyn = tagsFromSynonyms.find((item) =>
           excludes[0].includes(item.id)
-        ); // find tags from synonym
+        );
 
         if (includesTagFromSyn) {
           _and.push({
@@ -123,112 +125,9 @@ module.exports = {
         totalCount: count,
       };
     } catch (e) {
-      console.log(e);
       return { status: 400, message: "Unknow Error" };
     }
   },
-  // async find(ctx) {
-  //   try {
-  //     let user = ctx.state.user;
-
-  //     let { pageSize = 20, page = 0 } = ctx.query;
-
-  //     let fromUser = user ? user.id : -1;
-
-  //     let resSCHEMA = {
-  //       data: [],
-  //       page: 0,
-  //       totalCount: 0,
-  //     };
-
-  //     let sub = await strapi
-  //       .query("subscriptions")
-  //       .findOne({ "user.id": fromUser });
-
-  //     if (!sub) {
-  //       return resSCHEMA;
-  //     }
-
-  //     let tagsFromSynonyms = await strapi
-  //       .query("synonyms")
-  //       .find({ slug_in: sub.synonyms.map((o) => o.synonym.slug) });
-
-  //     // prepare tags into common standards
-  //     // we can improve synonym to ignore author here
-  //     let tags = sub.tags.concat(
-  //       _.flatten(
-  //         tagsFromSynonyms.map((synonym) =>
-  //           synonym.tags.map((tag) => ({ tag: tag, exclude_authors: [] }))
-  //         )
-  //       )
-  //     );
-
-  //     let raw = await strapi
-  //       .query("announcements")
-  //       .model.query(function (q) {
-  //         // left join is currently the only solution to produce complex query using knexjs,bookshelfjs type of ORM module
-  //         q.leftJoin(
-  //           "announcements__tags",
-  //           "announcements.id",
-  //           "announcements__tags.announcement_id"
-  //         );
-
-  //         q.leftJoin("tags", "announcements__tags.tag_id", "tags.id");
-
-  //         q.where("announcements.author", "!=", fromUser);
-
-  //         tags.forEach((node) => {
-  //           q.orWhere(function () {
-  //             let self = this.where("announcements__tags.tag_id", node.tag.id);
-
-  //             if (node.exclude_authors && node.exclude_authors.length > 0) {
-  //               self.andWhere(
-  //                 "announcements.author",
-  //                 "NOT IN",
-  //                 node.exclude_authors.map((author) => author.id)
-  //               );
-  //             }
-  //           });
-  //         });
-
-  //         sub.authors.forEach((node) => {
-  //           q.orWhere(function () {
-  //             let self = this.where("announcements.author", node.id);
-
-  //             if (node.exclude_tags && node.exclude_tags.length > 0) {
-  //               self.andWhere(
-  //                 "tags.id",
-  //                 "NOT IN",
-  //                 node.exclude_tags.map((o) => o.id)
-  //               );
-  //             }
-  //           });
-  //         });
-
-  //         q.orderBy("postdate", "desc");
-  //       })
-  //       .fetchPage({
-  //         pageSize,
-  //         page,
-  //         limit: pageSize,
-  //         offset: (page - 1) * pageSize,
-  //         debug: true,
-  //       });
-
-  //     resSCHEMA = {
-  //       data: raw.map((item) =>
-  //         sanitizeEntity(item, { model: strapi.models.announcements })
-  //       ),
-  //       limit: parseInt(pageSize),
-  //       offset: (page - 1) * pageSize,
-  //     };
-
-  //     return resSCHEMA;
-  //   } catch (e) {
-  //     console.error("get-sub-error", e);
-  //     return;
-  //   }
-  // },
   async findByOwner(ctx) {
     let user = ctx.state.user;
     const authorId = user ? user.id : -1; // none reachable user id
@@ -272,11 +171,12 @@ module.exports = {
 
     try {
       let existingTags = await createTags(tags, authorId);
+
       await strapi.query("announcements").create({
         title: title,
         message: message,
         tags: existingTags,
-        resources: resources.map((r) => r.id),
+        resources: resources.map((r) => r.id), //gather id only
         synonyms: synonyms.map((s) => s.id),
         postdate: new Date(),
         author: authorId,
@@ -284,7 +184,6 @@ module.exports = {
 
       return { status: 200, message: "Announcement Created Successful" };
     } catch (e) {
-      console.log(e);
       return {
         status: 400,
         message: "Unknown Error While Creating Announcement",

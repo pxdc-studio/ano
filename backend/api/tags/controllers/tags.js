@@ -4,12 +4,7 @@
  * Read the documentation (https://strapi.io/documentation/developer-docs/latest/concepts/controllers.html#core-controllers)
  * to customize this controller
  */
-const { parseMultipartData, sanitizeEntity } = require("strapi-utils");
-const {
-  create,
-  update,
-} = require("../../announcements/controllers/announcements");
-const { createTags, createResources } = strapi.config.functions["common"];
+const { sanitizeEntity } = require("strapi-utils");
 
 const slugify = require("slugify");
 
@@ -121,7 +116,6 @@ module.exports = {
 
       return { status: 200, message: "Tag Deleted Successfull" };
     } catch (e) {
-      console.log(e);
       return { status: 400, message: "Unknown Error" };
     }
   },

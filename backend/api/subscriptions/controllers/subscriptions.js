@@ -37,7 +37,6 @@ module.exports = {
         totalCount: raw.pagination.rowCount,
       };
     } catch (e) {
-      console.log(e);
       return { status: 400, message: "Unknown Error" };
     }
   },
@@ -53,7 +52,6 @@ module.exports = {
 
       return { status: 200, message: "Create Subcription Successful" };
     } catch (e) {
-      console.log(e);
       return { status: 400, message: "Unknow Error Create A sub" };
     }
   },
@@ -79,7 +77,6 @@ module.exports = {
 
       return { status: 200, message: "Update Subcription Successful" };
     } catch (e) {
-      console.log(e);
       return { status: 400, message: "Unknow Error Edit A sub" };
     }
   },

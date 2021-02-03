@@ -1,5 +1,4 @@
-/* eslint-disable */
-import React, { useContext, useEffect, useState, useMemo, forwardRef, useRef, useImperativeHandle } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Container,
@@ -7,47 +6,23 @@ import {
   TextField,
   Typography,
   Button,
-  // Select,
-  // MenuItem,
-  // FormControl,
-  // InputLabel,
-  // Chip,
-  // FormHelperText,
   withStyles,
   Grid,
   Switch,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   CircularProgress,
   Modal,
-  Fade,
   Backdrop
 } from '@material-ui/core';
-import * as Yup from 'yup';
-// import { toast } from 'react-toastify';
-import { Formik } from 'formik';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import Page from 'src/components/Page';
-// import TagsModal from 'src/components/tagsModal';
-import { postAnnouncement, putAnnouncement } from 'src/services/announcementService';
-
-import { getTagsAutocomplete } from 'src/services/tagsServices';
-import { getResourceAutocomplete } from 'src/services/resourcesService';
-import { getSynonymsAutocomplete } from 'src/services/synonymsService';
-
-import AddIcon from '@material-ui/icons/Add';
-import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
-import CheckCircle from '@material-ui/icons/CheckCircle';
-
-import { AutocompleteByTagName } from './tags.autocomplete';
-import R, { AutocompleteResourceByName } from './resources.autocomplete';
-import { Synonyms } from './synonyms.autocomplete';
 import { toast } from 'react-toastify';
-
-export { AutocompleteResourceByName as Resources, Synonyms, AutocompleteByTagName as Tags };
+import * as Yup from 'yup';
+import { Formik } from 'formik';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Page from 'src/components/Page';
+import { postAnnouncement, putAnnouncement } from 'src/services/announcementService';
+import AddIcon from '@material-ui/icons/Add';
+import { AutocompleteByTagName } from 'src/components/autocomplete/tags.autocomplete';
+import { AutocompleteResourceByName } from 'src/components/autocomplete/resources.autocomplete';
+import { AutocompleteSynonymByName } from 'src/components/autocomplete/synonyms.autocomplete';
 
 const AntSwitch = withStyles((theme) => ({
   root: {
@@ -111,7 +86,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-let STAGE = {
+const STAGE = {
   READY: 0,
   SUCCESS: 1,
   LOADING: 2,
@@ -127,13 +102,13 @@ const AnnouncementListView = ({ action }) => {
   const tagRef = useRef();
   const synonymRef = useRef();
 
-  let navigate = useNavigate();
+  const navigate = useNavigate();
 
   // Save and Update Announcement
   const _handleSubmit = async (values) => {
     try {
       setStage(STAGE.LOADING);
-      let payload = {
+      const payload = {
         id: state.id,
         title: values.title,
         message: values.message,
@@ -143,7 +118,7 @@ const AnnouncementListView = ({ action }) => {
         status: state.status
       };
 
-      let { data } = action == 'update' ? await putAnnouncement(payload) : await postAnnouncement(payload);
+      const { data } = action === 'update' ? await putAnnouncement(payload) : await postAnnouncement(payload);
 
       const { status, message } = data;
 
@@ -154,7 +129,6 @@ const AnnouncementListView = ({ action }) => {
         toast.error(message);
       }
     } catch (e) {
-      console.log(e);
       toast.error('Server Error');
     }
   };
@@ -165,13 +139,12 @@ const AnnouncementListView = ({ action }) => {
         <form onSubmit={handleSubmit}>
           <Box mb={3}>
             <Typography color="textPrimary" variant="h2">
-              {action == 'update' ? 'Update' : 'New'} Announcement
+              {action === 'update' ? 'Update' : 'New'} Announcement
             </Typography>
           </Box>
 
           <TextField
             // eslint-disable-next-line no-unneeded-ternary
-
             defaultValue={state.title}
             error={errors.title != null}
             fullWidth
@@ -204,16 +177,16 @@ const AnnouncementListView = ({ action }) => {
           <br />
           <AutocompleteByTagName ref={tagRef} value={state.tags} />
           <br />
-          <Synonyms name="Synonyms" ref={synonymRef} value={state.synonyms} />
-          {action == 'update' && (
+          <AutocompleteSynonymByName ref={synonymRef} value={state.synonyms} />
+          {action === 'update' && (
             <Typography component="div" style={{ marginTop: 16 }}>
               <Grid component="label" container alignItems="center" spacing={1}>
                 <Grid item>Archived</Grid>
                 <Grid item>
                   <AntSwitch
-                    checked={state.status == 'active'}
-                    onChange={(e) => {
-                      state.status = state.status == 'active' ? 'archived' : 'active';
+                    checked={state.status === 'active'}
+                    onChange={() => {
+                      state.status = state.status === 'active' ? 'archived' : 'active';
                       setState({ ...state });
                     }}
                     name="status"
@@ -233,7 +206,7 @@ const AnnouncementListView = ({ action }) => {
               variant="contained"
               startIcon={<AddIcon />}
             >
-              {action == 'update' ? 'Update' : 'Create'}
+              {action === 'update' ? 'Update' : 'Create'}
             </Button>
           </Box>
         </form>
@@ -250,7 +223,7 @@ const AnnouncementListView = ({ action }) => {
     <Page className={classes.root} title="Announcement">
       <Box display="flex" flexDirection="column" height="100%" justifyContent="center">
         <Container maxWidth="sm">
-          <Loading show={stage == STAGE.LOADING} />
+          <Loading show={stage === STAGE.LOADING} />
           <Formik validationSchema={validation} onSubmit={_handleSubmit} initialValues={state}>
             {Form}
           </Formik>
@@ -279,31 +252,6 @@ function Loading({ show }) {
         <CircularProgress disableShrink />
       </Modal>
     </div>
-  );
-}
-
-export function ModalAddAnnouncement({ show, onClose }) {
-  const classes = useStyles();
-
-  return !show ? null : (
-    <Modal
-      aria-labelledby="transition-modal-title"
-      aria-describedby="transition-modal-description"
-      className={classes.modal}
-      open={show}
-      onClose={onClose}
-      closeAfterTransition
-      BackdropComponent={Backdrop}
-      BackdropProps={{
-        timeout: 500
-      }}
-    >
-      <Fade in={show}>
-        <div className={classes.paper}>
-          <AnnouncementListView onClose={onClose} />
-        </div>
-      </Fade>
-    </Modal>
   );
 }
 

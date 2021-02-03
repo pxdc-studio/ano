@@ -1,26 +1,15 @@
-/* eslint-disable */
-
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Box, Container, makeStyles, Chip, Grid, Button, ButtonGroup, TextField } from '@material-ui/core';
+import React, { useState } from 'react';
+import { Box, Container, makeStyles, Chip } from '@material-ui/core';
 import { useTheme, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import MaterialTable from 'material-table';
 import { useNavigate } from 'react-router-dom';
 import Page from 'src/components/Page';
-import { deleteAnnouncement, getAllAnnouncementsByUser, putAnnouncement } from 'src/services/announcementService';
+import { deleteAnnouncement, getAllAnnouncementsByUser } from 'src/services/announcementService';
 import moment from 'moment';
 import { toast } from 'react-toastify';
-import { ModalAddAnnouncement } from '../form.crud';
 
-import { StageContext } from '../context';
-import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
-import ToggleButton from '@material-ui/lab/ToggleButton';
-
-import { getTagsAutocomplete } from 'src/services/tagsServices';
-import { getResourceAutocomplete } from 'src/services/resourcesService';
-import { getSynonymsAutocomplete } from 'src/services/synonymsService';
 import TagIcon from '@material-ui/icons/Bookmark';
 import TagsIcon from '@material-ui/icons/Bookmarks';
-import { AutocompleteByTagName } from '../form.crud/tags.autocomplete';
 // Styles for root component
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -71,32 +60,26 @@ const themeTable = createMuiTheme({
   }
 });
 
-const STAGE = {
-  CREATE: 0,
-  READY: 1
-};
-
 const AnnouncementListView = () => {
   const navigate = useNavigate();
   const classes = useStyles();
   const theme = useTheme();
   const [loader, setLoader] = useState(true);
-  const [stage, setStage] = useState(STAGE.READY);
-  const [selectedRow, setSelectedRow] = useState(null);
 
   async function fetchAllAnnouncementsByUser(query) {
     try {
-      let { status, data } = await getAllAnnouncementsByUser({
+      const { status, data } = await getAllAnnouncementsByUser({
         pageSize: query.pageSize,
         page: query.page
       });
 
-      if (status == 200) {
+      if (status === 200) {
+        // this is due to sql return nesting object, best to due with it now
         data.data = data.data.map((item) => {
           item.synonyms = item.synonyms.map((syn) => {
             syn.tags = syn.tags.map((tag) => tag.tag);
             return syn;
-          }); // this is due to sql return nesting object,
+          });
           return item;
         });
 
@@ -109,15 +92,10 @@ const AnnouncementListView = () => {
     }
   }
 
-  let resourceRef = useRef();
-  let tagRef = useRef();
-  let synonymRef = useRef();
-  let tableRef = useRef();
-
   async function handleDeleteResource({ id }) {
     try {
       const { data } = await deleteAnnouncement(id);
-      let { status, message } = data;
+      const { status, message } = data;
       if (status === 200) {
         toast.success(message);
         return true;
@@ -130,17 +108,112 @@ const AnnouncementListView = () => {
 
   const ACTIONS = [
     {
-      icon: 'add',
+      // custom action for update in new tab
+      icon: 'create',
+      tooltip: 'Update Announcement',
+
+      // eslint-disable-next-line
+      onClick: (event, rowData) => {
+        const { id, title, message, postdate, status, tags, resources, synonyms } = rowData;
+        navigate(`/announcements/update/${id}`, {
+          state: {
+            id,
+            title,
+            message,
+            tags,
+            resources,
+            synonyms,
+            status,
+            postdate
+          }
+        });
+      }
+    },
+    {
+      icon: 'create',
       tooltip: 'Add Announcement',
-      position: 'toolbar',
       isFreeAction: true,
       onClick: () => {
-        navigate('/announcements/add');
+        navigate(`/announcements/add`);
       }
     }
   ];
 
-  // return useMemo(() => {
+  const COLUMNS = [
+    { title: 'Title', field: 'title' },
+    {
+      title: 'Status',
+      field: 'status',
+      lookup: { active: 'Active', archived: 'Archived' }
+    },
+    {
+      title: 'Post Date',
+      field: 'postdate',
+      render: (rowData) => moment(rowData.postdate).format('DD-MM-YYYY'),
+      editable: 'never'
+    },
+    {
+      title: 'Tags',
+      render: (rowData) =>
+        rowData.tags.map((r) => {
+          return <Chip icon={<TagIcon />} key={r.name} label={r.slug} size="small" style={{ margin: 2 }} />;
+        })
+    },
+    {
+      title: 'Synonyms',
+      render: (rowData) =>
+        rowData.synonyms.map((r) => {
+          return <Chip icon={<TagsIcon />} key={r.name} label={r.slug} size="small" style={{ margin: 2 }} />;
+        })
+    }
+  ];
+
+  const DETAIL = [
+    {
+      icon: 'description',
+      tooltip: 'Show Resource',
+      render: (rowData) => {
+        return (
+          <div className={classes.resources}>
+            <h3>Messages</h3>
+            <div>{rowData.message}</div>
+            {rowData.resources.length > 0 && (
+              <>
+                <hr />
+                <h3>Resources</h3>
+                <ul>
+                  {rowData.resources.map((item, index) => (
+                    <div key={item.slug}>
+                      <span>{index + 1}</span>
+                      <span className="col">{item.slug}</span>
+                      <span className="col">{item.url}</span>
+                    </div>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        );
+      }
+    }
+  ];
+
+  const OPTIONS = {
+    actionsColumnIndex: -1,
+    search: false,
+    filtering: true,
+    paging: true,
+    pageSize: 5,
+    pageSizeOptions: [5, 10, 20],
+    headerStyle: {
+      backgroundColor: theme.palette.primary.main,
+      color: '#FFF',
+      '&:hover': {
+        color: '#FFF'
+      }
+    }
+  };
+
   return (
     <Page className={classes.root} title="Announcement">
       <Container maxWidth={false}>
@@ -153,125 +226,16 @@ const AnnouncementListView = () => {
               editable={{
                 onRowDelete: handleDeleteResource
               }}
-              columns={[
-                { title: 'Title', field: 'title' },
-                {
-                  title: 'Status',
-                  field: 'status',
-                  lookup: { active: 'Active', archived: 'Archived' }
-                },
-                {
-                  title: 'Post Date',
-                  field: 'postdate',
-                  render: (rowData) => moment(rowData.postdate).format('DD-MM-YYYY'),
-                  editable: 'never'
-                },
-                {
-                  title: 'Tags',
-                  render: (rowData) =>
-                    rowData.tags.map((r, index) => {
-                      return <Chip icon={<TagIcon />} key={index} label={r.slug} size="small" style={{ margin: 2 }} />;
-                    })
-                },
-                {
-                  title: 'Synonyms',
-                  render: (rowData) =>
-                    rowData.synonyms.map((r, index) => {
-                      return <Chip icon={<TagsIcon />} key={index} label={r.slug} size="small" style={{ margin: 2 }} />;
-                    })
-                }
-              ]}
+              columns={COLUMNS}
               data={fetchAllAnnouncementsByUser}
-              detailPanel={[
-                {
-                  icon: 'description',
-                  tooltip: 'Show Resource',
-                  render: (rowData) => {
-                    return (
-                      <div className={classes.resources}>
-                        <h3>Messages</h3>
-                        <div>{rowData.message}</div>
-                        {rowData.resources.length > 0 && (
-                          <>
-                            <hr />
-                            <h3>Resources</h3>
-                            <ul>
-                              {rowData.resources.map((item, index) => (
-                                <div key={index}>
-                                  <span>{index + 1}</span>
-                                  <span className="col">{item.slug}</span>
-                                  <span className="col">{item.url}</span>
-                                </div>
-                              ))}
-                            </ul>
-                          </>
-                        )}
-                      </div>
-                    );
-                  }
-                }
-              ]}
-              // onRowClick={(evt, selectedRow) => setSelectedRow(selectedRow.tableData.id)}
-              options={{
-                actionsColumnIndex: -1,
-                search: false,
-                filtering: true,
-                paging: true,
-                pageSize: 5,
-                pageSizeOptions: [5, 10, 20],
-                headerStyle: {
-                  backgroundColor: theme.palette.primary.main,
-                  color: '#FFF',
-                  '&:hover': {
-                    color: '#FFF'
-                  }
-                },
-                rowStyle: (rowData) => ({
-                  fontFamily: 'Roboto',
-                  backgroundColor:
-                    selectedRow === rowData.tableData.id
-                      ? theme.palette.background.dark
-                      : theme.palette.background.default,
-                  color: theme.palette.text.primary
-                })
-              }}
-              actions={[
-                {
-                  // custom action for update in new tab
-                  icon: 'create',
-                  tooltip: 'Update Announcement',
-                  onClick: (event, rowData) => {
-                    const { id, title, message, postdate, status, tags, resources, synonyms } = rowData;
-                    navigate(`/announcements/update/${id}`, {
-                      state: {
-                        id,
-                        title,
-                        message,
-                        tags,
-                        resources,
-                        synonyms,
-                        status,
-                        postdate
-                      }
-                    });
-                  }
-                },
-                {
-                  icon: 'create',
-                  tooltip: 'Add Announcement',
-                  isFreeAction: true,
-                  onClick: (event, rowData) => {
-                    navigate(`/announcements/add`);
-                  }
-                }
-              ]}
+              detailPanel={DETAIL}
+              options={OPTIONS}
             />
           </MuiThemeProvider>
         </Box>
       </Container>
     </Page>
   );
-  // }, [loader]);
 };
 
 export default AnnouncementListView;

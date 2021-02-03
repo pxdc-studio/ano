@@ -4,11 +4,7 @@
  * Read the documentation (https://strapi.io/documentation/developer-docs/latest/concepts/controllers.html#core-controllers)
  * to customize this controller
  */
-const { parseMultipartData, sanitizeEntity } = require("strapi-utils");
-
-const { createTags, createResources } = strapi.config.functions["common"];
-
-const slugify = require("slugify");
+const { sanitizeEntity } = require("strapi-utils");
 
 module.exports = {
   async autocomplete(ctx) {
@@ -128,7 +124,6 @@ module.exports = {
 
       return { status: 200, message: "Resource Updated Successful" };
     } catch (e) {
-      console.log(e);
       return { status: 400, message: "Unknow Error Updating Resources" };
     }
   },
