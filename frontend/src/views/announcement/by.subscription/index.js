@@ -236,16 +236,23 @@ function AnnouncementView() {
                 render: (rowData) => {
                   return (
                     <div className={classes.resources}>
-                      <h3>Resources</h3>
-                      <ul>
-                        {rowData.resources.map((item, index) => (
-                          <div key={index}>
-                            <span>{index + 1}</span>
-                            <span className="col">{item.slug}</span>
-                            <span className="col">{item.url}</span>
-                          </div>
-                        ))}
-                      </ul>
+                      <h3>Messages</h3>
+                      <div>{rowData.message}</div>
+                      {rowData.resources.length > 0 && (
+                        <>
+                          <hr />
+                          <h3>Resources</h3>
+                          <ul>
+                            {rowData.resources.map((item, index) => (
+                              <div key={index}>
+                                <span>{index + 1}</span>
+                                <span className="col">{item.slug}</span>
+                                <span className="col">{item.url}</span>
+                              </div>
+                            ))}
+                          </ul>
+                        </>
+                      )}
                     </div>
                   );
                 }
