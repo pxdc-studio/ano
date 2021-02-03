@@ -26,6 +26,14 @@ module.exports = {
         .query("subscriptions")
         .find({ author: authorId });
 
+      if (allsubs.length == 0) {
+        return {
+          data: [],
+          page: parseInt(page),
+          totalCount: 0,
+        };
+      }
+
       let synonyms = allsubs.map((item) => {
         let synonyms = [];
         synonyms = synonyms.concat(
